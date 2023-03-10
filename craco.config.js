@@ -1,3 +1,6 @@
+const webpack = require("webpack")
+const webpackPlugins = require("craco-webpack-plugins")
+
 module.exports = {
     webpack: {
         configure: {
@@ -13,15 +16,19 @@ module.exports = {
             },
             resolve: {
                 fallback: {
-                    "crypto": false,
+                    "crypto": require.resolve("crypto-browserify"),
                     "buffer": require.resolve('buffer/'),
+                    "stream": false
                 }
-            },
-            plugins: [
-                new webpack.ProvidePlugin({
-                    Buffer: ['buffer', 'Buffer'],
-                }),
-            ],
+            }
         }
-    }
+    },
+    plugins: [{
+        plugin: webpackPlugins,
+        options: {
+            plugins: [new webpack.ProvidePlugin({
+                Buffer: ['buffer', 'Buffer'],
+            })]
+        }
+    }],
 };

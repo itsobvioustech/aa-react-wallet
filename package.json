@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@account-abstraction/contracts": "^0.5.0",
+    "@account-abstraction/sdk": "^0.5.0",
     "@passwordless-id/webauthn": "^1.2.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -11,6 +13,7 @@
     "@types/node": "^16.18.14",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
+    "crypto-browserify": "^3.12.0",
     "ethers": "^5.7.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -44,6 +47,7 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.0.0",
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "craco-webpack-plugins": "^1.2.2"
   }
 }

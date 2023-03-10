@@ -1,5 +1,5 @@
 import { RegistrationEncoded, AuthenticationEncoded } from "@passwordless-id/webauthn/dist/esm/types";
-import { IWebAuthnClient} from "@aa-passkeys-wallet/WebAuthnWrapper";
+import { IWebAuthnClient} from "@aa-passkeys-wallet/packages/wallet/WebAuthnWrapper";
 import {client, utils} from "@passwordless-id/webauthn"
 
 export class WebAuthnPlugin implements IWebAuthnClient {
