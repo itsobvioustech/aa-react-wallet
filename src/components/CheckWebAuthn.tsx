@@ -1,6 +1,6 @@
 import { client, utils } from '@passwordless-id/webauthn'
 import { useEffect, useState } from 'react'
-import { WebAuthnPlugin } from '../plugins/WebAuthnPlugin'
+import { WebAuthnPlugin } from '@aa-passkeys-wallet/packages/wallet/client/WebAuthnPlugin'
 import { PassKeyKeyPair, WebAuthnWrapper } from "@aa-passkeys-wallet/packages/wallet/WebAuthnWrapper"
 import { PassKeysAccountApi, PassKeysAccountApiParams } from '@aa-passkeys-wallet/packages/wallet/PassKeysAccountAPI'
 import { ethers, BigNumber } from 'ethers'
@@ -16,7 +16,7 @@ export const CheckWebAuthn = () => {
     bundlerUrl: "http://localhost:9000/rpc",
   }
   const revivePassKeyPair = (x: any):PassKeyKeyPair => {
-    return new PassKeyKeyPair(x.keyId, x.pubKeyX, x.pubKeyY, wap)
+    return new PassKeyKeyPair(x.keyId, x.pubKeyX, x.pubKeyY, wap, x.name, x.aaguid, x.manufacturer, x.regTime)
   }
   let entryPoint: EntryPoint;
 
@@ -103,7 +103,7 @@ export const CheckWebAuthn = () => {
               <h3>User : {activeUser?.keyId} </h3>
               <select onChange={e => handleUserChange(e.target.value)}>
                 <option> Pick a PassKey </option>
-                { users.map((user, i) => <option key={user.keyId} value={i}>{user.keyId}</option>) }
+                { users.map((user, i) => <option key={user.keyId} value={i}>{user.name || user.keyId} , { user.manufacturer }, { user.regTime } </option>) }
               </select>
               {erc4337Provider && erc4337Account && provider &&
                 <ERC4337Account erc4337Provider={erc4337Provider} jsonRPCProvider={provider} address={erc4337Account} />
