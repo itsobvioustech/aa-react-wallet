@@ -1,6 +1,5 @@
 import { createContext } from 'react';
-import { WebAuthnPlugin } from '@aa-passkeys-wallet/packages/wallet/client/WebAuthnPlugin'
-import { WebAuthnWrapper } from "@aa-passkeys-wallet/packages/wallet/WebAuthnWrapper"
+import { WebAuthnWrapper, WebAuthnPlugin } from '@itsobvioustech/aa-passkeys-client'
 
 const wap = new WebAuthnPlugin()
 const waw = new WebAuthnWrapper(wap)

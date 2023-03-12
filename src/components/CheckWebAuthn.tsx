@@ -1,7 +1,6 @@
 import { client, utils } from '@passwordless-id/webauthn'
 import { useContext, useEffect, useState } from 'react'
-import { PassKeyKeyPair } from "@aa-passkeys-wallet/packages/wallet/WebAuthnWrapper"
-import { PassKeysAccountApi, PassKeysAccountApiParams } from '@aa-passkeys-wallet/packages/wallet/PassKeysAccountAPI'
+import { PassKeysAccountApi, PassKeysAccountApiParams, PassKeyKeyPair } from "@itsobvioustech/aa-passkeys-client"
 import { ethers, BigNumber } from 'ethers'
 import { ERC4337EthersProvider, ClientConfig, HttpRpcClient } from '@account-abstraction/sdk'
 import { EntryPoint__factory, EntryPoint } from '@account-abstraction/contracts'

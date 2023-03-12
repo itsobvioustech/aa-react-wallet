@@ -2,10 +2,9 @@ import { useEffect, useState, useContext } from 'react'
 import { utils } from '@passwordless-id/webauthn'
 import { ethers, BigNumber } from 'ethers'
 import { ERC4337EthersProvider } from '@account-abstraction/sdk'
-import { PassKeysAccount, PassKeysAccount__factory } from '@aa-passkeys-wallet/typechain-types'
-import { PassKeysAccountApi } from '@aa-passkeys-wallet/packages/wallet/PassKeysAccountAPI'
+import { PassKeysAccount, PassKeysAccount__factory } from '@itsobvioustech/aa-passkeys-wallet'
+import { PassKeysAccountApi, PassKeyKeyPair } from '@itsobvioustech/aa-passkeys-client'
 import { AppContext } from '../AppContext'
-import { PassKeyKeyPair } from '@aa-passkeys-wallet/packages/wallet/WebAuthnWrapper'
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
