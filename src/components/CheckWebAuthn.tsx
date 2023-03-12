@@ -1,22 +1,27 @@
 import { client, utils } from '@passwordless-id/webauthn'
-import { useEffect, useState } from 'react'
-import { WebAuthnPlugin } from '@aa-passkeys-wallet/packages/wallet/client/WebAuthnPlugin'
-import { PassKeyKeyPair, WebAuthnWrapper } from "@aa-passkeys-wallet/packages/wallet/WebAuthnWrapper"
+import { useContext, useEffect, useState } from 'react'
+import { PassKeyKeyPair } from "@aa-passkeys-wallet/packages/wallet/WebAuthnWrapper"
 import { PassKeysAccountApi, PassKeysAccountApiParams } from '@aa-passkeys-wallet/packages/wallet/PassKeysAccountAPI'
 import { ethers, BigNumber } from 'ethers'
 import { ERC4337EthersProvider, ClientConfig, HttpRpcClient } from '@account-abstraction/sdk'
 import { EntryPoint__factory, EntryPoint } from '@account-abstraction/contracts'
 import { ERC4337Account, ERC4337AccountProps } from './ERC4337Account'
+import { AppContext } from '../AppContext'
+import Button from 'react-bootstrap/Button';
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Form from 'react-bootstrap/Form';
 
 export const CheckWebAuthn = () => {
-  const wap = new WebAuthnPlugin()
-  const waw = new WebAuthnWrapper(wap)
+  const waw = useContext(AppContext)
   const clientConfig: ClientConfig = {
     entryPointAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
     bundlerUrl: "http://localhost:9000/rpc",
   }
   const revivePassKeyPair = (x: any):PassKeyKeyPair => {
-    return new PassKeyKeyPair(x.keyId, x.pubKeyX, x.pubKeyY, wap, x.name, x.aaguid, x.manufacturer, x.regTime)
+    return new PassKeyKeyPair(x.keyId, BigNumber.from(x.pubKeyX), BigNumber.from(x.pubKeyY), waw.webAuthnClient, 
+                              x.name, x.aaguid, x.manufacturer, x.regTime)
   }
   let entryPoint: EntryPoint;
 
@@ -40,6 +45,7 @@ export const CheckWebAuthn = () => {
       setBundlerRPC(bundlerRPC)
     }
     initialiseProvider()
+    setAvailable(client.isAvailable())
   }, [])
 
   useEffect(() => {
@@ -90,29 +96,44 @@ export const CheckWebAuthn = () => {
   }
 
   return(
-    <div>
-      <button onClick={() => setAvailable(client.isAvailable())}>Check</button>
+    <Container>
+      <h2> Seedless Wallet </h2>
       { available && 
-        <div>
-          WebAuthn is available <br/> 
-          {provider?._network?.chainId} <br/>
-          <input type="text" placeholder="Username" onChange={ e => setUserName(e.target.value)} />
-          <button onClick={registerUser}>Register</button>
+        <Container>
+          <Row className='header status'>
+            <Col>
+              WebAuthn is available
+            </Col>
+            <Col xs={6}>
+              Chain - {provider?._network?.chainId}
+            </Col>
+          </Row>
+          <Row className='new-user-regn'>
+            <Col xs={6}>
+              <Form.Control type="text" placeholder="Username" onChange={ e => setUserName(e.target.value)} />
+              <Button onClick={registerUser} type='button'>Add a PassKey</Button>
+            </Col>
+            { users.length > 0 && 
+              <Col xs={6}>
+                <Col lg={true}>
+                  <Form.Select onChange={e => handleUserChange(e.target.value)}>
+                    <option> Pick a PassKey </option>
+                    { users.map((user, i) => <option key={user.keyId} value={i}>{user.name || user.keyId} , { user.manufacturer }, { user.regTime } </option>) }
+                  </Form.Select>
+                </Col>
+              </Col>
+            }
+          </Row>
           { users.length > 0 && 
-            <div>
-              <h3>User : {activeUser?.keyId} </h3>
-              <select onChange={e => handleUserChange(e.target.value)}>
-                <option> Pick a PassKey </option>
-                { users.map((user, i) => <option key={user.keyId} value={i}>{user.name || user.keyId} , { user.manufacturer }, { user.regTime } </option>) }
-              </select>
-              {erc4337Provider && erc4337Account && provider &&
-                <ERC4337Account erc4337Provider={erc4337Provider} jsonRPCProvider={provider} address={erc4337Account} />
+            <Row className='wallet'>
+              {erc4337Provider && erc4337Account && provider && passKeyAPI &&
+                <ERC4337Account erc4337Provider={erc4337Provider} jsonRPCProvider={provider} address={erc4337Account} passKeyAPI={passKeyAPI} />
               }
-            </div>
+            </Row>
           }
-        </div>
+        </Container>
       }
-    </div>
+    </Container>
   )
 }
 
