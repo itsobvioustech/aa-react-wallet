@@ -1,6 +1,7 @@
-import { useEffect, useState, useContext } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { utils } from '@passwordless-id/webauthn'
 import { ethers, BigNumber } from 'ethers'
+import { UserOperationStruct } from '@account-abstraction/contracts'
 import { ERC4337EthersProvider } from '@account-abstraction/sdk'
 import { PassKeysAccount, PassKeysAccount__factory } from '@itsobvioustech/aa-passkeys-wallet'
 import { PassKeysAccountApi, PassKeyKeyPair } from '@itsobvioustech/aa-passkeys-client'
@@ -12,14 +13,18 @@ import Col from 'react-bootstrap/Col';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Form from 'react-bootstrap/Form';
 import Spinner from 'react-bootstrap/Spinner';
+import Toast from 'react-bootstrap/Toast';
+import { FaAddressCard } from 'react-icons/fa'
+import { MdSend, MdKey, MdKeyOff } from 'react-icons/md'
 
 export type ERC4337AccountProps = {
     erc4337Provider: ERC4337EthersProvider,
     jsonRPCProvider: ethers.providers.JsonRpcProvider,
     passKeyAPI: PassKeysAccountApi,
     address: string,
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>
 }
-export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, passKeyAPI} : ERC4337AccountProps) => {
+export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, passKeyAPI, setLoading} : ERC4337AccountProps) => {
     const waw = useContext(AppContext)
     const [balance, setBalance] = useState<BigNumber>(BigNumber.from(0))
     const [stakeBalance, setStakeBalance] = useState<BigNumber>(BigNumber.from(0))
@@ -32,7 +37,42 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
     const [txnProgress, setTxnProgress] = useState<boolean>(false)
     const [activeSigner, setActiveSigner] = useState<string>('')
     const [removePassKey, setRemovePassKey] = useState<string>('')
+    const [showToast, setShowToast] = useState(false)
+    const [toastMessage, setToastMessage] = useState("")
+    const [toastStyle, setToastStyle] = useState("success")
 
+    const txnProgressCallback = (userop: UserOperationStruct, state: string) => {
+        setShowToast(true)
+        switch (state) {
+            case "pre_sign":
+                setToastMessage("Please sign transaction with your passkey")
+                break
+            default:
+                console.log("Transaction state : ", state, userop)
+        }
+    }
+
+    const displayToast = (message: string):void => {
+        setToastStyle("success")
+        setShowToast(true)
+        setToastMessage(message)
+    }
+
+    const displayErrorToast = (message: string):void => {
+        setToastStyle("danger")
+        setShowToast(true)
+        setToastMessage(message)
+    }
+
+    const displayTxnReceipt = (message: ethers.providers.TransactionReceipt):void => {
+        displayToast("Transaction succeded  Block - " + 
+        message.blockHash + 
+        " Block Number - " +
+        message.blockNumber +
+        " Transaction - " + 
+        message.transactionHash)
+    }
+  
     useEffect(() => {
         const getAccount = async () => {
             const account = PassKeysAccount__factory.connect(address, jsonRPCProvider)
@@ -42,13 +82,16 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
     }, [address])
 
     useEffect(() => {
+        passKeyAPI.setTxnProgressCallback(txnProgressCallback)
         const getSigners = async () => {
+            setLoading(true)
             setActiveSigner(passKeyAPI.passKeyPair.keyId)
             const balance = await erc4337Provider.getBalance(address)
             const stakeBalance = await erc4337Provider.entryPoint.balanceOf(address)
             setBalance(balance)
             setStakeBalance(stakeBalance)
             if (passKeysAccount) {
+                setRemovePassKey('')
                 try{
                     const keys = await passKeysAccount.getAuthorisedKeys()
                     setAuthorisedKeys(keys)
@@ -57,6 +100,7 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                     console.log("Error fetching signers - account not deployed?", e.message)
                 }
             }
+            setLoading(false)
         }
         getSigners()
     }, [passKeysAccount, txnProgress])
@@ -74,15 +118,18 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                         data: "0x",
                     })
                     console.log("Transaction : ", txn)
+                    displayToast("Signed transaction hash - " + txn.hash)
                     console.log("Transaction hash : ", txn.hash)
                     let receipt = await erc4337Provider.waitForTransaction(txn.hash, 1, 60000)
                     console.log("Transaction receipt : ", receipt)
+                    displayTxnReceipt(receipt)
                     setBalance(await erc4337Provider.getBalance(address))
                     setStakeBalance(await erc4337Provider.entryPoint.balanceOf(address))
                     setSendAmount('')
                     setReceiver('')    
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
+                    displayErrorToast("Transaction failed  - " + e.message)
                 }
                 setTxnProgress(false)
             }
@@ -106,14 +153,17 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                         data: passKeysAccount.interface.encodeFunctionData("addPassKey", [newPassKey.keyId, newPassKey.pubKeyX, newPassKey.pubKeyY]),
                     })
                     console.log("Transaction : ", txn)
+                    displayToast("Signed transaction hash - " + txn.hash)
                     console.log("Transaction hash : ", txn.hash)
                     let receipt = await erc4337Provider.waitForTransaction(txn.hash, 1, 60000)
                     console.log("Transaction receipt : ", receipt)
+                    displayTxnReceipt(receipt)
                     setBalance(await erc4337Provider.getBalance(address))
                     setStakeBalance(await erc4337Provider.entryPoint.balanceOf(address))
                     setNewPassKey(undefined)    
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
+                    displayErrorToast("Transaction failed  - " + e.message)
                 }
                 setTxnProgress(false)
             }
@@ -132,14 +182,17 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                         data: passKeysAccount.interface.encodeFunctionData("removePassKey", [removePassKey]),
                     })
                     console.log("Transaction : ", txn)
+                    displayToast("Signed transaction hash - " + txn.hash)
                     console.log("Transaction hash : ", txn.hash)
                     let receipt = await erc4337Provider.waitForTransaction(txn.hash, 1, 60000)
                     console.log("Transaction receipt : ", receipt)
+                    displayTxnReceipt(receipt)
                     setBalance(await erc4337Provider.getBalance(address))
                     setStakeBalance(await erc4337Provider.entryPoint.balanceOf(address))
                     setNewPassKey(undefined)    
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
+                    displayErrorToast("Transaction failed  - " + e.message)
                 }
                 setTxnProgress(false)
             }
@@ -155,7 +208,7 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
     return(
         <Container className='account'>
             <Row>
-                <p>Address: {address}</p>
+                <p><FaAddressCard /> {address}</p>
             </Row>
             <Row>
                 <Col>
@@ -181,7 +234,7 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                                         role="status"
                                         aria-hidden="true"
                                         hidden={!txnProgress}
-                                    /> Send 
+                                    /> Send <MdSend />
                                 </Button>
                             </Col>
                         </Row>
@@ -217,12 +270,12 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                                     <Col xs={3}>Add Signer</Col>
                                     <Col className='section add-signer'>
                                         <Form.Control size="sm" type="text" placeholder="PassKey Name" onChange={ e => setPassKeyName(e.target.value)} value={ passKeyName } />
-                                        <Button onClick={ createPassKey } disabled={(passKeyName?.length == 0 || newPassKey) ? true : false }>Create PassKey 🔐 </Button>
+                                        <Button onClick={ createPassKey } disabled={(passKeyName?.length == 0 || newPassKey) ? true : false }>Create PassKey <MdKey /> </Button>
                                         { newPassKey && !newPassKey.pubKeyX.isZero() && !newPassKey.pubKeyY.isZero() &&
                                             <div>
                                                 <br/>
                                                 <Button onClick={ addPassKey } disabled={ txnProgress }>
-                                                    Add 🔏 - { newPassKey.name }
+                                                    Add <MdKey /> - { newPassKey.name }
                                                 </Button>
                                             </div>
                                         }
@@ -234,13 +287,12 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                                         <Col>
                                             <Col>
                                                 <Form.Select onChange={ e => setRemovePassKey(e.target.value) } size="sm">
+                                                    <option key=''>Pick a key to remove</option>
                                                     { authorisedKeys
                                                         .filter(x => x != activeSigner)
                                                         .map( (key, index) => <option key={index}>{key}</option>) }
                                                 </Form.Select>
-                                            </Col>
-                                            <Col>
-                                                <Button onClick={ executeRemovePassKey } disabled={ txnProgress }> Remove 🔐 </Button>
+                                                <Button onClick={ executeRemovePassKey } disabled={ txnProgress || removePassKey?.length == 0 }> Remove <MdKeyOff /> </Button>
                                             </Col>
                                         </Col>
                                     </Row>
@@ -249,6 +301,17 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                         }
                         </Row>
                     </Container>
+                </Col>
+            </Row>
+            <br/>
+            <Row>
+                <Col xs={8}>
+                <Toast onClose={() => setShowToast(false)} show={showToast} delay={15000} bg={toastStyle} autohide>
+                    <Toast.Header>
+                    <strong className="me-auto">Txn Update</strong>
+                    </Toast.Header>
+                    <Toast.Body>{toastMessage}</Toast.Body>
+                </Toast>
                 </Col>
             </Row>
         </Container>

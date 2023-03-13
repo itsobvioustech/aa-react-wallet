@@ -45,17 +45,17 @@ body, html {
   }
 }
 
-.App input,button,select {
-  padding: 5px 5px;
-  margin: 5px 5px;
+.App input, .App button, .App select {
+  padding: 5px 10px;
+  margin: 3px 3px;
 }
 
 .App li {
   text-align: left;
 }
 
-.App select {
-  width: 80%;
+.App select, .App input {
+  width: 100%;
 }
 
 .wallet {
@@ -74,4 +74,8 @@ body, html {
   overflow: hidden;
   text-align: left;
   text-transform: lowercase;
+}
+
+.management button {
+  float: right;
 }
