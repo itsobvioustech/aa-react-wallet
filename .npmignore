@@ -1,0 +1,16 @@
+src
+lib
+.env
+out
+broadcast
+.secret
+.git*
+deploy
+*.sol
+/typechain-types
+cache
+remappings.txt
+foundry.toml
+/*.ts
+/client
+/utils
