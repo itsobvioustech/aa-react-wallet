@@ -11,6 +11,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Form from 'react-bootstrap/Form';
+import Spinner from 'react-bootstrap/Spinner';
 
 export type ERC4337AccountProps = {
     erc4337Provider: ERC4337EthersProvider,
@@ -64,19 +65,25 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
         if (sendAmount && receiver) {
             const execute = async () => {
                 setTxnProgress(true)
-                let eth = ethers.utils.parseEther(sendAmount)
-                let signer = erc4337Provider.getSigner()
-                let txn = await signer.sendTransaction({
-                    to: receiver,
-                    value: eth,
-                    data: "0x",
-                })
-                console.log("Transaction : ", txn)
-                console.log("Transaction hash : ", txn.hash)
-                let receipt = await txn.wait()
-                console.log("Transaction receipt : ", receipt)
-                setBalance(await erc4337Provider.getBalance(address))
-                setStakeBalance(await erc4337Provider.entryPoint.balanceOf(address))
+                try{
+                    let eth = ethers.utils.parseEther(sendAmount)
+                    let signer = erc4337Provider.getSigner()
+                    let txn = await signer.sendTransaction({
+                        to: receiver,
+                        value: eth,
+                        data: "0x",
+                    })
+                    console.log("Transaction : ", txn)
+                    console.log("Transaction hash : ", txn.hash)
+                    let receipt = await erc4337Provider.waitForTransaction(txn.hash, 1, 60000)
+                    console.log("Transaction receipt : ", receipt)
+                    setBalance(await erc4337Provider.getBalance(address))
+                    setStakeBalance(await erc4337Provider.entryPoint.balanceOf(address))
+                    setSendAmount('')
+                    setReceiver('')    
+                } catch (e: any) {
+                    console.log("Error waiting for transaction : ", e.message)
+                }
                 setTxnProgress(false)
             }
             execute()
@@ -92,19 +99,23 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
         if (newPassKey && passKeysAccount) {
             const execute = async () => {
                 setTxnProgress(true)
-                let signer = erc4337Provider.getSigner()
-                let txn = await signer.sendTransaction({
-                    to: address,
-                    data: passKeysAccount.interface.encodeFunctionData("addPassKey", [newPassKey.keyId, newPassKey.pubKeyX, newPassKey.pubKeyY]),
-                })
-                console.log("Transaction : ", txn)
-                console.log("Transaction hash : ", txn.hash)
-                let receipt = await txn.wait()
-                console.log("Transaction receipt : ", receipt)
-                setBalance(await erc4337Provider.getBalance(address))
-                setStakeBalance(await erc4337Provider.entryPoint.balanceOf(address))
+                try{
+                    let signer = erc4337Provider.getSigner()
+                    let txn = await signer.sendTransaction({
+                        to: address,
+                        data: passKeysAccount.interface.encodeFunctionData("addPassKey", [newPassKey.keyId, newPassKey.pubKeyX, newPassKey.pubKeyY]),
+                    })
+                    console.log("Transaction : ", txn)
+                    console.log("Transaction hash : ", txn.hash)
+                    let receipt = await erc4337Provider.waitForTransaction(txn.hash, 1, 60000)
+                    console.log("Transaction receipt : ", receipt)
+                    setBalance(await erc4337Provider.getBalance(address))
+                    setStakeBalance(await erc4337Provider.entryPoint.balanceOf(address))
+                    setNewPassKey(undefined)    
+                } catch (e: any) {
+                    console.log("Error waiting for transaction : ", e.message)
+                }
                 setTxnProgress(false)
-                setNewPassKey(undefined)
             }
             execute()
         }
@@ -114,19 +125,23 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
         if (removePassKey && passKeysAccount && authorisedKeys.includes(removePassKey) && removePassKey !== activeSigner) {
             const execute = async () => {
                 setTxnProgress(true)
-                let signer = erc4337Provider.getSigner()
-                let txn = await signer.sendTransaction({
-                    to: address,
-                    data: passKeysAccount.interface.encodeFunctionData("removePassKey", [removePassKey]),
-                })
-                console.log("Transaction : ", txn)
-                console.log("Transaction hash : ", txn.hash)
-                let receipt = await txn.wait()
-                console.log("Transaction receipt : ", receipt)
-                setBalance(await erc4337Provider.getBalance(address))
-                setStakeBalance(await erc4337Provider.entryPoint.balanceOf(address))
+                try{
+                    let signer = erc4337Provider.getSigner()
+                    let txn = await signer.sendTransaction({
+                        to: address,
+                        data: passKeysAccount.interface.encodeFunctionData("removePassKey", [removePassKey]),
+                    })
+                    console.log("Transaction : ", txn)
+                    console.log("Transaction hash : ", txn.hash)
+                    let receipt = await erc4337Provider.waitForTransaction(txn.hash, 1, 60000)
+                    console.log("Transaction receipt : ", receipt)
+                    setBalance(await erc4337Provider.getBalance(address))
+                    setStakeBalance(await erc4337Provider.entryPoint.balanceOf(address))
+                    setNewPassKey(undefined)    
+                } catch (e: any) {
+                    console.log("Error waiting for transaction : ", e.message)
+                }
                 setTxnProgress(false)
-                setNewPassKey(undefined)
             }
             execute()
         }
@@ -157,8 +172,17 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                         </Row>
                         <Row>
                             <Col>
-                                <Button onClick={ send } disabled={ txnProgress || !authorisedKeys.includes(activeSigner) 
-                                    || sendAmount.length == 0 || receiver.length == 0 || !ethers.utils.isAddress(receiver) }> Send </Button>
+                                <Button onClick={ send } disabled={ txnProgress || (authorisedKeys.length>0 && !authorisedKeys.includes(activeSigner) )
+                                    || sendAmount.length == 0 || receiver.length == 0 || !ethers.utils.isAddress(receiver) }> 
+                                    <Spinner
+                                        as="span"
+                                        animation="grow"
+                                        size="sm"
+                                        role="status"
+                                        aria-hidden="true"
+                                        hidden={!txnProgress}
+                                    /> Send 
+                                </Button>
                             </Col>
                         </Row>
                     </div>
@@ -197,7 +221,9 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                                         { newPassKey && !newPassKey.pubKeyX.isZero() && !newPassKey.pubKeyY.isZero() &&
                                             <div>
                                                 <br/>
-                                                <Button onClick={ addPassKey } disabled={ txnProgress }>Add 🔏 - { newPassKey.name }</Button>
+                                                <Button onClick={ addPassKey } disabled={ txnProgress }>
+                                                    Add 🔏 - { newPassKey.name }
+                                                </Button>
                                             </div>
                                         }
                                     </Col>
