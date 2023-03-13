@@ -140,6 +140,7 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
     const createPassKey = async () => {
         const passKey = await waw.registerPassKey(utils.randomChallenge(), passKeyName)
         setNewPassKey(passKey)
+        setPassKeyName('')
     }
 
     const addPassKey = async () => {
@@ -208,7 +209,7 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
     return(
         <Container className='account'>
             <Row>
-                <p><FaAddressCard /> {address}</p>
+                <p className='address'><FaAddressCard /> {address}</p>
             </Row>
             <Row>
                 <Col>
@@ -216,15 +217,13 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                         <p>Balance: { ethers.utils.formatEther(balance) }Ξ</p>
                         <p>Stake Balance: { ethers.utils.formatEther(stakeBalance) }Ξ</p>
                         <Row>
-                            <Col>
+                            <Col xs={4}>
                                 <Form.Control type="text" placeholder="Amount" value={ sendAmount } onChange={ e => setSendAmount(e.target.value) } />
                             </Col>
-                            <Col>
+                            <Col xs={4}>
                                 <Form.Control type="text" placeholder="Receiver" value={ receiver } onChange={ e=> setReceiver(e.target.value) } />
                             </Col>
-                        </Row>
-                        <Row>
-                            <Col>
+                            <Col xs={4}>
                                 <Button onClick={ send } disabled={ txnProgress || (authorisedKeys.length>0 && !authorisedKeys.includes(activeSigner) )
                                     || sendAmount.length == 0 || receiver.length == 0 || !ethers.utils.isAddress(receiver) }> 
                                     <Spinner
@@ -243,7 +242,8 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                 <Col>
                     <Container className='management'>
                         <Row>
-                            Active Signer - {activeSigner}
+                            <Col xs={3}>Active Signer</Col>
+                            <Col> {activeSigner} </Col>
                         </Row>
                         <Row>
                         { authorisedKeys.length > 0 && 
@@ -269,15 +269,22 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                                 <Row>
                                     <Col xs={3}>Add Signer</Col>
                                     <Col className='section add-signer'>
+                                        <Row>
+                                        <Col xs={8}>
                                         <Form.Control size="sm" type="text" placeholder="PassKey Name" onChange={ e => setPassKeyName(e.target.value)} value={ passKeyName } />
-                                        <Button onClick={ createPassKey } disabled={(passKeyName?.length == 0 || newPassKey) ? true : false }>Create PassKey <MdKey /> </Button>
+                                        </Col>
+                                        <Col xs={4}>
+                                        <Button onClick={ createPassKey } disabled={(passKeyName?.length == 0 || newPassKey) ? true : false }>Create <MdKey /> </Button>
+                                        </Col>
+                                        </Row>
                                         { newPassKey && !newPassKey.pubKeyX.isZero() && !newPassKey.pubKeyY.isZero() &&
-                                            <div>
-                                                <br/>
+                                            <Row>
+                                                <Col xs={{ span:8, offset:4}}>
                                                 <Button onClick={ addPassKey } disabled={ txnProgress }>
                                                     Add <MdKey /> - { newPassKey.name }
                                                 </Button>
-                                            </div>
+                                                </Col>
+                                            </Row>
                                         }
                                     </Col>
                                 </Row>
@@ -285,15 +292,19 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                                     <Row className='section remove-signer'>
                                         <Col xs={3}>Remove Signer</Col>
                                         <Col>
-                                            <Col>
-                                                <Form.Select onChange={ e => setRemovePassKey(e.target.value) } size="sm">
+                                        <Row>
+                                            <Col xs={8}>
+                                            <Form.Select onChange={ e => setRemovePassKey(e.target.value) } size="sm">
                                                     <option key=''>Pick a key to remove</option>
                                                     { authorisedKeys
                                                         .filter(x => x != activeSigner)
                                                         .map( (key, index) => <option key={index}>{key}</option>) }
-                                                </Form.Select>
-                                                <Button onClick={ executeRemovePassKey } disabled={ txnProgress || removePassKey?.length == 0 }> Remove <MdKeyOff /> </Button>
+                                            </Form.Select>
                                             </Col>
+                                            <Col xs={4}>
+                                            <Button onClick={ executeRemovePassKey } disabled={ txnProgress || removePassKey?.length == 0 }> Remove <MdKeyOff /> </Button>
+                                            </Col>
+                                        </Row>
                                         </Col>
                                     </Row>
                                 }

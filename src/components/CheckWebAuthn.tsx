@@ -135,8 +135,14 @@ export const CheckWebAuthn = () => {
           <br/>
           <Row className='new-user-regn'>
             <Col xs={6}>
-              <Form.Control type="text" placeholder="Username" onChange={ e => setUserName(e.target.value)} />
-              <Button onClick={registerUser} type='button'>Add a PassKey</Button>
+              <Row>
+                <Col xs={8}>
+                <Form.Control type="text" placeholder="Username" onChange={ e => setUserName(e.target.value)} />
+                </Col>
+                <Col xs={4}>
+                <Button onClick={registerUser} type='button'>Add a PassKey</Button>
+                </Col>
+              </Row>
             </Col>
             { users.length > 0 && 
               <Col xs={6}>

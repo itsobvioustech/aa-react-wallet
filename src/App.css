@@ -77,5 +77,10 @@ body, html {
 }
 
 .management button {
-  float: right;
+  width: 100%;
+}
+
+.account .address {
+  font-size: large;
+  font-weight: 700;
 }
