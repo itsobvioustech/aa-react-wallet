@@ -1,5 +1,6 @@
 const webpack = require("webpack")
 const webpackPlugins = require("craco-webpack-plugins")
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
     webpack: {
@@ -28,7 +29,10 @@ module.exports = {
         options: {
             plugins: [new webpack.ProvidePlugin({
                 Buffer: ['buffer', 'Buffer'],
-            })]
+            }),
+            new Dotenv({
+                systemvars: true
+              })]
         }
     }],
 };
