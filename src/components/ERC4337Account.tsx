@@ -96,10 +96,8 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                 try{
                     const keys = await passKeysAccount.getAuthorisedKeys()
                     if (!(activeSigner in keys)){
-                        console.log("Active signer not in authorised keys - changing")
                         const knownPassKey = knownUsers.find((user) => user.keyId in keys)
                         if (knownPassKey) {
-                            console.log("Found known passkey - changing")
                             changePassKeyPair(knownPassKey)
                         } else {
                             changePassKeyPair(keys[0])
@@ -108,7 +106,6 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                     setAuthorisedKeys(keys)
                 } catch (e: any) {
                     setAuthorisedKeys([])
-                    console.log("Error fetching signers - account not deployed?", e.message)
                 }
             }
             setLoading(false)
@@ -127,6 +124,7 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                         to: receiver,
                         value: eth,
                         data: "0x",
+                        gasLimit: 40000,
                     })
                     console.log("Transaction : ", txn)
                     displayToast("Signed transaction hash - " + txn.hash)
