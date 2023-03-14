@@ -5,7 +5,7 @@ import { UserOperationStruct } from '@account-abstraction/contracts'
 import { ERC4337EthersProvider } from '@account-abstraction/sdk'
 import { PassKeysAccount, PassKeysAccount__factory } from '@itsobvioustech/aa-passkeys-wallet'
 import { PassKeysAccountApi, PassKeyKeyPair } from '@itsobvioustech/aa-passkeys-client'
-import { AppContext } from '../AppContext'
+import { AppContext, KnownUsers } from '../AppContext'
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
@@ -26,6 +26,7 @@ export type ERC4337AccountProps = {
 }
 export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, passKeyAPI, setLoading} : ERC4337AccountProps) => {
     const waw = useContext(AppContext)
+    const knownUsers = useContext(KnownUsers)
     const [balance, setBalance] = useState<BigNumber>(BigNumber.from(0))
     const [stakeBalance, setStakeBalance] = useState<BigNumber>(BigNumber.from(0))
     const [sendAmount, setSendAmount] = useState<string>('')
@@ -94,6 +95,16 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                 setRemovePassKey('')
                 try{
                     const keys = await passKeysAccount.getAuthorisedKeys()
+                    if (!(activeSigner in keys)){
+                        console.log("Active signer not in authorised keys - changing")
+                        const knownPassKey = knownUsers.find((user) => user.keyId in keys)
+                        if (knownPassKey) {
+                            console.log("Found known passkey - changing")
+                            changePassKeyPair(knownPassKey)
+                        } else {
+                            changePassKeyPair(keys[0])
+                        }
+                    }
                     setAuthorisedKeys(keys)
                 } catch (e: any) {
                     setAuthorisedKeys([])
@@ -201,14 +212,19 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
         }
     }
 
-    const changePassKeyPair = async (keyId: string) => {
-        passKeyAPI.changePassKeyPair(new PassKeyKeyPair(keyId, BigNumber.from(0), BigNumber.from(0), waw.webAuthnClient))
-        setActiveSigner(passKeyAPI.passKeyPair.keyId)
+    const changePassKeyPair = async (keyId: string | PassKeyKeyPair) => {
+        if (keyId instanceof PassKeyKeyPair) {
+            passKeyAPI.changePassKeyPair(keyId)
+            setActiveSigner(keyId.keyId)
+        } else {
+            passKeyAPI.changePassKeyPair(new PassKeyKeyPair(keyId, BigNumber.from(0), BigNumber.from(0), waw.webAuthnClient))
+            setActiveSigner(passKeyAPI.passKeyPair.keyId)
+        }
     }
 
     return(
         <Container className='account'>
-            <Row>
+            <Row xs={12}>
                 <p className='address'><FaAddressCard /> {address}</p>
             </Row>
             <Row>

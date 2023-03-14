@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { WebAuthnWrapper, WebAuthnPlugin } from '@itsobvioustech/aa-passkeys-client'
+import { WebAuthnWrapper, WebAuthnPlugin, PassKeyKeyPair } from '@itsobvioustech/aa-passkeys-client'
 
 const wap = new WebAuthnPlugin()
 const waw = new WebAuthnWrapper(wap)
@@ -38,3 +38,4 @@ export const knownNetworks = new Map<string, AppConfig>([
 
 export const AppContext = createContext<WebAuthnWrapper>(waw);
 export const AppConfigContext = createContext<AppConfig>(knownNetworks.get('local')!);
+export const KnownUsers = createContext<PassKeyKeyPair[]>([]);

@@ -5,7 +5,7 @@ import { ethers, BigNumber } from 'ethers'
 import { ERC4337EthersProvider, ClientConfig, HttpRpcClient } from '@account-abstraction/sdk'
 import { EntryPoint__factory } from '@account-abstraction/contracts'
 import { ERC4337Account } from './ERC4337Account'
-import { AppContext, AppConfigContext, knownNetworks, AppConfig } from '../AppContext'
+import { AppContext, AppConfigContext, knownNetworks, AppConfig, KnownUsers } from '../AppContext'
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
@@ -14,6 +14,7 @@ import Form from 'react-bootstrap/Form';
 import Dropdown from 'react-bootstrap/Dropdown';
 import LoadingOverlay from 'react-loading-overlay-ts';
 import { FaSeedling } from 'react-icons/fa'
+import { MdKey } from 'react-icons/md'
 
 export const CheckWebAuthn = () => {
   const waw = useContext(AppContext)
@@ -39,6 +40,7 @@ export const CheckWebAuthn = () => {
   const [passKeyAPI, setPassKeyAPI] = useState<PassKeysAccountApi>()
   const [erc4337Provider, setErc4337Provider] = useState<ERC4337EthersProvider>()
   const [erc4337Account, setErc4337Account] = useState<string>()
+  const [queryAddress, setQueryAddress] = useState<string>("")
 
   useEffect(() => {
     setLoading(true)
@@ -100,6 +102,15 @@ export const CheckWebAuthn = () => {
     }
   }
 
+  async function authenticatePassKey() {
+    const passKey = await PassKeyKeyPair.getValidPassKeyPair(waw.webAuthnClient)
+    if (passKey.keyId) {
+      if (!(passKey.keyId in users.map(x => x.keyId))) {
+        setUsers([...users, passKey])
+      }
+    }
+  }
+
   const handleUserChange = (user: string) => {
     setActiveUser(users[parseInt(user)])
   }
@@ -108,16 +119,17 @@ export const CheckWebAuthn = () => {
     <Container>
       <h2> Seedless Wallet <FaSeedling/> </h2> <br/>
       <AppConfigContext.Provider value={currentNetwork}>
+        <KnownUsers.Provider value={users}>
       { available && 
         <Container>
           <Row className='header status'>
-            <Col>
+            <Col xs={4}>
               WebAuthn is available
             </Col>
             <Col xs={3}>
               Chain - {provider?._network?.chainId}
             </Col>
-            <Col xs={3}>
+            <Col xs={4}>
               <Dropdown onSelect={e => setCurrentNetwork(knownNetworks.get(e!)!)}>
                 <Dropdown.Toggle variant="secondary" id="dropdown-basic">
                   Network { currentNetwork.networkName }
@@ -134,26 +146,35 @@ export const CheckWebAuthn = () => {
           </Row>
           <br/>
           <Row className='new-user-regn'>
-            <Col xs={6}>
-              <Row>
+            <Row xs={12}>
                 <Col xs={8}>
                 <Form.Control type="text" placeholder="Username" onChange={ e => setUserName(e.target.value)} />
                 </Col>
                 <Col xs={4}>
                 <Button onClick={registerUser} type='button'>Add a PassKey</Button>
                 </Col>
-              </Row>
-            </Col>
+            </Row>
             { users.length > 0 && 
-              <Col xs={6}>
-                <Col lg={true}>
+              <Row xs={12}>
+                <Col xs={8}>
                   <Form.Select onChange={e => handleUserChange(e.target.value)}>
                     <option> Pick a PassKey </option>
                     { users.map((user, i) => <option key={user.keyId} value={i}>{user.name || user.keyId} , { user.manufacturer }, { user.regTime } </option>) }
                   </Form.Select>
                 </Col>
-              </Col>
+                <Col xs={4}>
+                  <Button onClick={authenticatePassKey} type='button'>Authenticate <MdKey /></Button>
+                </Col>
+              </Row>
             }
+            <Row xs={12}>
+              <Col xs={8}>
+                <Form.Control type="text" placeholder="Address" onChange={ e => setQueryAddress(e.target.value)} />
+              </Col>
+              <Col xs={4}>
+                <Button onClick={ e => setErc4337Account(queryAddress)} type='button'>Query Address</Button>
+              </Col>
+            </Row>
           </Row>
           <br/>
           { users.length > 0 && 
@@ -167,6 +188,7 @@ export const CheckWebAuthn = () => {
           }
         </Container>
       }
+      </KnownUsers.Provider>
       </AppConfigContext.Provider>
     </Container>
   )
