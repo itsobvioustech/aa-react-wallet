@@ -17,8 +17,8 @@ export const knownNetworks = new Map<string, AppConfig>([
         networkName: 'local',
         entryPointAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
         factoryAddress: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
-        bundlerUrl: 'http://local.tools.obvious.technology:9000/rpc',
-        rpcUrl: 'http://local.tools.obvious.technology:8545',
+        bundlerUrl: 'https://ac3c-2401-4900-1cb8-af3e-2018-b7ad-c04c-d3b6.in.ngrok.io/rpc',
+        rpcUrl: 'https://1700-2401-4900-1cb8-af3e-2018-b7ad-c04c-d3b6.in.ngrok.io',
     }],
     ["Mumbai Matic", {
         networkName: 'Mumbai Matic',
