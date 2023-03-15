@@ -41,6 +41,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
     const [showToast, setShowToast] = useState(false)
     const [toastMessage, setToastMessage] = useState("")
     const [toastStyle, setToastStyle] = useState("success")
+    const [reloadPassKeyAccount, setReloadPassKeyAccount] = useState<string>("")
 
     const txnProgressCallback = (userop: UserOperationStruct, state: string) => {
         setShowToast(true)
@@ -109,7 +110,8 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
         }
         getSigners()
         refreshBalances()
-    }, [passKeysAccount])
+    }, [passKeysAccount, reloadPassKeyAccount])
+
     useEffect(() => {
         refreshBalances()
     }, [passKeysProvider])
@@ -188,6 +190,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                     setBalance(await passKeysProvider.getBalance(address))
                     setStakeBalance(await passKeysProvider.entryPoint.balanceOf(address))
                     setNewPassKey(undefined)    
+                    setReloadPassKeyAccount(receipt.transactionHash)
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
                     displayErrorToast("Transaction failed  - " + e.message)
@@ -217,6 +220,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                     setBalance(await passKeysProvider.getBalance(address))
                     setStakeBalance(await passKeysProvider.entryPoint.balanceOf(address))
                     setNewPassKey(undefined)    
+                    setReloadPassKeyAccount(receipt.transactionHash)
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
                     displayErrorToast("Transaction failed  - " + e.message)
