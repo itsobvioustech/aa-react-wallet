@@ -110,6 +110,9 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
         getSigners()
         refreshBalances()
     }, [passKeysAccount])
+    useEffect(() => {
+        refreshBalances()
+    }, [passKeysProvider])
 
     useEffect(() => {
         passKeyAPI.setTxnProgressCallback(txnProgressCallback)
@@ -258,7 +261,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                             </Col>
                             <Col xs={4}>
                                 <Button onClick={ send } disabled={ txnProgress || (authorisedKeys.length>0 && !authorisedKeys.includes(activeSigner) )
-                                    || sendAmount.length == 0 || receiver.length == 0 || !ethers.utils.isAddress(receiver) }> 
+                                    || sendAmount.length === 0 || receiver.length === 0 || !ethers.utils.isAddress(receiver) }> 
                                     <Spinner
                                         as="span"
                                         animation="grow"
@@ -307,7 +310,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                                         <Form.Control size="sm" type="text" placeholder="PassKey Name" onChange={ e => setPassKeyName(e.target.value)} value={ passKeyName } />
                                         </Col>
                                         <Col xs={4}>
-                                        <Button onClick={ createPassKey } disabled={(passKeyName?.length == 0 || newPassKey) ? true : false }>Create <MdKey /> </Button>
+                                        <Button onClick={ createPassKey } disabled={(passKeyName?.length === 0 || newPassKey) ? true : false }>Create <MdKey /> </Button>
                                         </Col>
                                         </Row>
                                         { newPassKey && !newPassKey.pubKeyX.isZero() && !newPassKey.pubKeyY.isZero() &&
@@ -330,12 +333,12 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                                             <Form.Select onChange={ e => setRemovePassKey(e.target.value) } size="sm">
                                                     <option key=''>Pick a key to remove</option>
                                                     { authorisedKeys
-                                                        .filter(x => x != activeSigner)
+                                                        .filter(x => x !== activeSigner)
                                                         .map( (key, index) => <option key={index}>{key}</option>) }
                                             </Form.Select>
                                             </Col>
                                             <Col xs={4}>
-                                            <Button onClick={ executeRemovePassKey } disabled={ txnProgress || removePassKey?.length == 0 }> Remove <MdKeyOff /> </Button>
+                                            <Button onClick={ executeRemovePassKey } disabled={ txnProgress || removePassKey?.length === 0 }> Remove <MdKeyOff /> </Button>
                                             </Col>
                                         </Row>
                                         </Col>
