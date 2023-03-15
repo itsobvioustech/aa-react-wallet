@@ -1,11 +1,11 @@
 {
   "name": "@itsobvioustech/aa-react-wallet",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "dependencies": {
     "@account-abstraction/contracts": "^0.5.0",
     "@account-abstraction/sdk": "^0.5.0",
-    "@itsobvioustech/aa-passkeys-client": "^0.0.3",
+    "@itsobvioustech/aa-passkeys-client": "^0.0.4",
     "@itsobvioustech/aa-passkeys-wallet": "^0.0.2",
     "@passwordless-id/webauthn": "^1.2.0",
     "@testing-library/jest-dom": "^5.16.5",

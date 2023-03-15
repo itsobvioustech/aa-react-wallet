@@ -1,8 +1,8 @@
 import { client, utils } from '@passwordless-id/webauthn'
 import { useContext, useEffect, useState } from 'react'
-import { PassKeysAccountApi, PassKeysAccountApiParams, PassKeyKeyPair } from "@itsobvioustech/aa-passkeys-client"
+import { PassKeysAccountApi, PassKeysAccountApiParams, PassKeyKeyPair, PassKeysProvider } from "@itsobvioustech/aa-passkeys-client"
 import { ethers, BigNumber } from 'ethers'
-import { ERC4337EthersProvider, ClientConfig, HttpRpcClient } from '@account-abstraction/sdk'
+import { ClientConfig, HttpRpcClient } from '@account-abstraction/sdk'
 import { EntryPoint__factory } from '@account-abstraction/contracts'
 import { ERC4337Account } from './ERC4337Account'
 import { AppContext, AppConfigContext, knownNetworks, AppConfig, KnownUsers } from '../AppContext'
@@ -14,6 +14,7 @@ import Form from 'react-bootstrap/Form';
 import Dropdown from 'react-bootstrap/Dropdown';
 import LoadingOverlay from 'react-loading-overlay-ts';
 import { FaSeedling } from 'react-icons/fa'
+import { HiOutlineSwitchVertical } from 'react-icons/hi'
 import { MdKey } from 'react-icons/md'
 
 export const CheckWebAuthn = () => {
@@ -38,9 +39,10 @@ export const CheckWebAuthn = () => {
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider>()
   const [bundlerRPC, setBundlerRPC] = useState<HttpRpcClient>()
   const [passKeyAPI, setPassKeyAPI] = useState<PassKeysAccountApi>()
-  const [erc4337Provider, setErc4337Provider] = useState<ERC4337EthersProvider>()
+  const [passKeysProvider, setPassKeysProvider] = useState<PassKeysProvider>()
   const [erc4337Account, setErc4337Account] = useState<string>()
   const [queryAddress, setQueryAddress] = useState<string>("")
+  const [togglePassKey, setTogglePassKey] = useState<boolean>(false)
 
   useEffect(() => {
     setLoading(true)
@@ -76,7 +78,7 @@ export const CheckWebAuthn = () => {
   useEffect(() => {
     if (passKeyAPI && bundlerRPC && provider) {
       setLoading(true)
-      const erc4337Provider = new ERC4337EthersProvider(
+      const passKeysProvider = new PassKeysProvider(
         provider._network.chainId,
         clientConfig,
         provider.getSigner(),
@@ -85,7 +87,7 @@ export const CheckWebAuthn = () => {
         EntryPoint__factory.connect(clientConfig.entryPointAddress, provider),
         passKeyAPI
       )
-      setErc4337Provider(erc4337Provider)
+      setPassKeysProvider(passKeysProvider)
       setLoading(false)
     }
   }, [passKeyAPI])
@@ -113,6 +115,23 @@ export const CheckWebAuthn = () => {
 
   const handleUserChange = (user: string) => {
     setActiveUser(users[parseInt(user)])
+  }
+
+  const switchAddress = (address: string) => {
+    if (provider && passKeyAPI && bundlerRPC) {
+      setErc4337Account(address)
+      const passKeysProvider = new PassKeysProvider(
+        provider._network.chainId,
+        clientConfig,
+        provider.getSigner(),
+        provider,
+        bundlerRPC,
+        EntryPoint__factory.connect(clientConfig.entryPointAddress, provider),
+        passKeyAPI,
+        address
+      )
+      setPassKeysProvider(passKeysProvider)
+    }
   }
 
   return(
@@ -146,42 +165,53 @@ export const CheckWebAuthn = () => {
           </Row>
           <br/>
           <Row className='new-user-regn'>
-            <Row xs={12}>
+            <fieldset>
+              <Row xs={12}>
                 <Col xs={8}>
                 <Form.Control type="text" placeholder="Username" onChange={ e => setUserName(e.target.value)} />
                 </Col>
                 <Col xs={4}>
                 <Button onClick={registerUser} type='button'>Add a PassKey</Button>
                 </Col>
-            </Row>
+              </Row>
+            </fieldset>
             { users.length > 0 && 
+              <fieldset disabled={togglePassKey}>
+                <Row xs={12}>
+                  <Col xs={8}>
+                    <Form.Select onChange={e => handleUserChange(e.target.value)}>
+                      <option> Pick a PassKey </option>
+                      { users.map((user, i) => <option key={user.keyId} value={i}>{user.name || user.keyId} , { user.manufacturer }, { user.regTime } </option>) }
+                    </Form.Select>
+                  </Col>
+                  <Col xs={4}>
+                    <Button onClick={authenticatePassKey} type='button'>Authenticate <MdKey /></Button>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col xs={12}>
+                    <HiOutlineSwitchVertical onClick={ _ => setTogglePassKey(!togglePassKey)}/>
+                  </Col>
+                </Row>
+              </fieldset>
+            }
+            <fieldset disabled={!togglePassKey || !(passKeyAPI?true:false)}>
               <Row xs={12}>
                 <Col xs={8}>
-                  <Form.Select onChange={e => handleUserChange(e.target.value)}>
-                    <option> Pick a PassKey </option>
-                    { users.map((user, i) => <option key={user.keyId} value={i}>{user.name || user.keyId} , { user.manufacturer }, { user.regTime } </option>) }
-                  </Form.Select>
+                  <Form.Control type="text" placeholder="Address" onChange={ e => setQueryAddress(e.target.value)} />
                 </Col>
                 <Col xs={4}>
-                  <Button onClick={authenticatePassKey} type='button'>Authenticate <MdKey /></Button>
+                  <Button onClick={ e => switchAddress(queryAddress)} type='button'>Query Address</Button>
                 </Col>
               </Row>
-            }
-            <Row xs={12}>
-              <Col xs={8}>
-                <Form.Control type="text" placeholder="Address" onChange={ e => setQueryAddress(e.target.value)} />
-              </Col>
-              <Col xs={4}>
-                <Button onClick={ e => setErc4337Account(queryAddress)} type='button'>Query Address</Button>
-              </Col>
-            </Row>
+            </fieldset>
           </Row>
           <br/>
           { users.length > 0 && 
             <LoadingOverlay active={loading} spinner text='Loading your wallet'>
               <Row className='wallet'>
-                {erc4337Provider && erc4337Account && provider && passKeyAPI &&
-                  <ERC4337Account erc4337Provider={erc4337Provider} jsonRPCProvider={provider} address={erc4337Account} passKeyAPI={passKeyAPI} setLoading={setLoading} />
+                {passKeysProvider && erc4337Account && provider && passKeyAPI &&
+                  <ERC4337Account passKeysProvider={passKeysProvider} jsonRPCProvider={provider} address={erc4337Account} passKeyAPI={passKeyAPI} setLoading={setLoading} />
                 }
               </Row>
             </LoadingOverlay>
