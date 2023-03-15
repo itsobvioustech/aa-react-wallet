@@ -16,6 +16,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import Toast from 'react-bootstrap/Toast';
 import { FaAddressCard } from 'react-icons/fa'
 import { MdSend, MdKey, MdKeyOff } from 'react-icons/md'
+import { PassKeyIdStructOutput } from '@itsobvioustech/aa-passkeys-wallet/build/typechain-types/IPassKeysAccount'
 
 export type ERC4337AccountProps = {
     erc4337Provider: ERC4337EthersProvider,
@@ -95,15 +96,16 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                 setRemovePassKey('')
                 try{
                     const keys = await passKeysAccount.getAuthorisedKeys()
-                    if (!(activeSigner in keys)){
-                        const knownPassKey = knownUsers.find((user) => user.keyId in keys)
+                    const passKeyIds = keys.map(x => x.keyId)
+                    if (!(activeSigner in passKeyIds)){
+                        const knownPassKey = knownUsers.find((user) => user.keyId in passKeyIds)
                         if (knownPassKey) {
                             changePassKeyPair(knownPassKey)
                         } else {
-                            changePassKeyPair(keys[0])
+                            changePassKeyPairFromContract(keys[0])
                         }
                     }
-                    setAuthorisedKeys(keys)
+                    setAuthorisedKeys(passKeyIds)
                 } catch (e: any) {
                     setAuthorisedKeys([])
                 }
@@ -116,7 +118,6 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
     const send = () => {
         if (sendAmount && receiver) {
             const execute = async () => {
-                setTxnProgress(true)
                 try{
                     let eth = ethers.utils.parseEther(sendAmount)
                     let signer = erc4337Provider.getSigner()
@@ -126,6 +127,7 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
                         data: "0x",
                         gasLimit: 40000,
                     })
+                    setTxnProgress(true)
                     console.log("Transaction : ", txn)
                     displayToast("Signed transaction hash - " + txn.hash)
                     console.log("Transaction hash : ", txn.hash)
@@ -155,13 +157,13 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
     const addPassKey = async () => {
         if (newPassKey && passKeysAccount) {
             const execute = async () => {
-                setTxnProgress(true)
                 try{
                     let signer = erc4337Provider.getSigner()
                     let txn = await signer.sendTransaction({
                         to: address,
                         data: passKeysAccount.interface.encodeFunctionData("addPassKey", [newPassKey.keyId, newPassKey.pubKeyX, newPassKey.pubKeyY]),
                     })
+                    setTxnProgress(true)
                     console.log("Transaction : ", txn)
                     displayToast("Signed transaction hash - " + txn.hash)
                     console.log("Transaction hash : ", txn.hash)
@@ -184,13 +186,13 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
     const executeRemovePassKey = async () => {
         if (removePassKey && passKeysAccount && authorisedKeys.includes(removePassKey) && removePassKey !== activeSigner) {
             const execute = async () => {
-                setTxnProgress(true)
                 try{
                     let signer = erc4337Provider.getSigner()
                     let txn = await signer.sendTransaction({
                         to: address,
                         data: passKeysAccount.interface.encodeFunctionData("removePassKey", [removePassKey]),
                     })
+                    setTxnProgress(true)
                     console.log("Transaction : ", txn)
                     displayToast("Signed transaction hash - " + txn.hash)
                     console.log("Transaction hash : ", txn.hash)
@@ -210,12 +212,17 @@ export const ERC4337Account = ( { erc4337Provider, jsonRPCProvider, address, pas
         }
     }
 
+    const changePassKeyPairFromContract = async (keyId: PassKeyIdStructOutput) => {
+        passKeyAPI.changePassKeyPair(new PassKeyKeyPair(keyId.keyId, keyId.pubKeyX, keyId.pubKeyY, waw))
+        setActiveSigner(keyId.keyId)
+    }
+
     const changePassKeyPair = async (keyId: string | PassKeyKeyPair) => {
         if (keyId instanceof PassKeyKeyPair) {
             passKeyAPI.changePassKeyPair(keyId)
             setActiveSigner(keyId.keyId)
         } else {
-            passKeyAPI.changePassKeyPair(new PassKeyKeyPair(keyId, BigNumber.from(0), BigNumber.from(0), waw.webAuthnClient))
+            passKeyAPI.changePassKeyPair(new PassKeyKeyPair(keyId, BigNumber.from(0), BigNumber.from(0), waw))
             setActiveSigner(passKeyAPI.passKeyPair.keyId)
         }
     }

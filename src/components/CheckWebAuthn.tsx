@@ -25,7 +25,7 @@ export const CheckWebAuthn = () => {
     bundlerUrl: currentNetwork.bundlerUrl,
   }
   const revivePassKeyPair = (x: any):PassKeyKeyPair => {
-    return new PassKeyKeyPair(x.keyId, BigNumber.from(x.pubKeyX), BigNumber.from(x.pubKeyY), waw.webAuthnClient, 
+    return new PassKeyKeyPair(x.keyId, BigNumber.from(x.pubKeyX), BigNumber.from(x.pubKeyY), waw, 
                               x.name, x.aaguid, x.manufacturer, x.regTime)
   }
 
@@ -103,7 +103,7 @@ export const CheckWebAuthn = () => {
   }
 
   async function authenticatePassKey() {
-    const passKey = await PassKeyKeyPair.getValidPassKeyPair(waw.webAuthnClient)
+    const passKey = await PassKeyKeyPair.getValidPassKeyPair(waw)
     if (passKey.keyId) {
       if (!(passKey.keyId in users.map(x => x.keyId))) {
         setUsers([...users, passKey])
