@@ -16,6 +16,7 @@ import LoadingOverlay from 'react-loading-overlay-ts';
 import { FaSeedling } from 'react-icons/fa'
 import { HiOutlineSwitchVertical } from 'react-icons/hi'
 import { MdKey } from 'react-icons/md'
+import { PassKeysAccount__factory } from '@itsobvioustech/aa-passkeys-wallet'
 
 export const CheckWebAuthn = () => {
   const waw = useContext(AppContext)
@@ -31,7 +32,7 @@ export const CheckWebAuthn = () => {
   }
 
   const [available, setAvailable] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(0)
   const [userName, setUserName] = useState("")
   const [users, setUsers] = useState<PassKeyKeyPair[]>(localStorage.getItem("users") ? 
     JSON.parse(localStorage.getItem("users") || "").filter((x:any) => x != null && x.pubKeyX && x.pubKeyY).map( revivePassKeyPair ) : [])
@@ -45,14 +46,14 @@ export const CheckWebAuthn = () => {
   const [togglePassKey, setTogglePassKey] = useState<boolean>(false)
 
   useEffect(() => {
-    setLoading(true)
+    incrementLoader()
     const initialiseProvider = async () => {
       const provider = new ethers.providers.JsonRpcProvider(currentNetwork.rpcUrl)
       await provider._ready()
       const bundlerRPC = new HttpRpcClient(clientConfig.bundlerUrl, clientConfig.entryPointAddress, provider?._network?.chainId)
       setProvider(provider)
       setBundlerRPC(bundlerRPC)
-      setLoading(false)
+      decrementLoader()
     }
     initialiseProvider()
     setAvailable(client.isAvailable())
@@ -60,7 +61,7 @@ export const CheckWebAuthn = () => {
 
   useEffect(() => {
     if (provider && bundlerRPC && activeUser) {
-      setLoading(true)
+      incrementLoader()
       const params: PassKeysAccountApiParams = {
         passKeyPair: activeUser,
         index: BigNumber.from(0),
@@ -71,13 +72,13 @@ export const CheckWebAuthn = () => {
       const passKeyAPI = new PassKeysAccountApi(params)
       setPassKeyAPI(passKeyAPI)
       passKeyAPI.getAccountAddress().then(x => setErc4337Account(x))
-      setLoading(false)
+      decrementLoader()
     }
   }, [activeUser, provider, bundlerRPC])
 
   useEffect(() => {
     if (passKeyAPI && bundlerRPC && provider) {
-      setLoading(true)
+      incrementLoader()
       const passKeysProvider = new PassKeysProvider(
         provider._network.chainId,
         clientConfig,
@@ -85,16 +86,24 @@ export const CheckWebAuthn = () => {
         provider,
         bundlerRPC,
         EntryPoint__factory.connect(clientConfig.entryPointAddress, provider),
-        passKeyAPI
+        passKeyAPI,
+        erc4337Account
       )
       setPassKeysProvider(passKeysProvider)
-      setLoading(false)
+      decrementLoader()
     }
   }, [passKeyAPI])
 
   useEffect(() => {
     localStorage.setItem("users", JSON.stringify(users))
   }, [users])
+
+  const incrementLoader = () => {
+    setLoading(loading + 1)
+  }
+  const decrementLoader = () => {
+    setLoading(loading - 1 > 0 ? loading - 1 : 0)
+  }
 
   async function registerUser() {
     console.log("Registering user", userName)
@@ -105,33 +114,38 @@ export const CheckWebAuthn = () => {
   }
 
   async function authenticatePassKey() {
-    const passKey = await PassKeyKeyPair.getValidPassKeyPair(waw)
-    if (passKey.keyId) {
-      if (!(passKey.keyId in users.map(x => x.keyId))) {
-        setUsers([...users, passKey])
+    // we should query the chain for all the known passkeys on this account
+    // ask for user to authenticate with one known pass key on this account
+    // add this passkey to the users list
+    if (provider) {
+      const passkeyAccount = PassKeysAccount__factory.connect(queryAddress, provider)
+      const knownKeys = await passkeyAccount.getAuthorisedKeys()
+      if (knownKeys.length > 0) {
+        const knownKeyIds = knownKeys.map(x => x.keyId)
+        const authorizedPassKey = await PassKeyKeyPair.getValidPassKeyPair(waw, knownKeyIds)
+        if (authorizedPassKey && knownKeyIds.includes(authorizedPassKey.keyId)) {
+          const matchedKey = knownKeys.find(x => x.keyId === authorizedPassKey.keyId)!
+          const passKey = new PassKeyKeyPair(matchedKey.keyId, matchedKey.pubKeyX, matchedKey.pubKeyY, waw)
+          if (users.findIndex(x => x.keyId === passKey.keyId) === -1) setUsers([...users, passKey])
+          setErc4337Account(queryAddress)
+          const params: PassKeysAccountApiParams = {
+            passKeyPair: passKey,
+            index: BigNumber.from(0),
+            factoryAddress: currentNetwork.factoryAddress,
+            provider: provider,
+            entryPointAddress: clientConfig.entryPointAddress,
+            accountAddress: queryAddress
+          }
+          const passKeyAPI = new PassKeysAccountApi(params)
+          setPassKeyAPI(passKeyAPI)
+          setQueryAddress("")
+        }
       }
     }
   }
 
   const handleUserChange = (user: string) => {
     setActiveUser(users[parseInt(user)])
-  }
-
-  const switchAddress = (address: string) => {
-    if (provider && passKeyAPI && bundlerRPC) {
-      setErc4337Account(address)
-      const passKeysProvider = new PassKeysProvider(
-        provider._network.chainId,
-        clientConfig,
-        provider.getSigner(),
-        provider,
-        bundlerRPC,
-        EntryPoint__factory.connect(clientConfig.entryPointAddress, provider),
-        passKeyAPI,
-        address
-      )
-      setPassKeysProvider(passKeysProvider)
-    }
   }
 
   return(
@@ -184,9 +198,6 @@ export const CheckWebAuthn = () => {
                       { users.map((user, i) => <option key={user.keyId} value={i}>{user.name || user.keyId} , { user.manufacturer }, { user.regTime } </option>) }
                     </Form.Select>
                   </Col>
-                  <Col xs={4}>
-                    <Button onClick={authenticatePassKey} type='button'>Authenticate <MdKey /></Button>
-                  </Col>
                 </Row>
                 <Row>
                   <Col xs={12}>
@@ -195,23 +206,27 @@ export const CheckWebAuthn = () => {
                 </Row>
               </fieldset>
             }
-            <fieldset disabled={!togglePassKey || !(passKeyAPI?true:false)}>
+            {/* !togglePassKey || !(passKeyAPI?true:false) */}
+            <fieldset disabled={!(togglePassKey ? togglePassKey : users.length === 0 )}>
               <Row xs={12}>
                 <Col xs={8}>
-                  <Form.Control type="text" placeholder="Address" onChange={ e => setQueryAddress(e.target.value)} />
+                  <Form.Control type="text" placeholder="Address" onChange={ e => setQueryAddress(e.target.value)} value={queryAddress} />
                 </Col>
                 <Col xs={4}>
-                  <Button onClick={ e => switchAddress(queryAddress)} type='button'>Query Address</Button>
+                  {/* <Button onClick={ e => switchAddress(queryAddress)} type='button'>Query Address</Button> */}
+                  <Button onClick={authenticatePassKey} type='button' disabled={!ethers.utils.isAddress(queryAddress)}>Authenticate <MdKey /></Button>
                 </Col>
               </Row>
             </fieldset>
           </Row>
           <br/>
           { users.length > 0 && 
-            <LoadingOverlay active={loading} spinner text='Loading your wallet'>
+            <LoadingOverlay active={loading > 0} spinner text='Loading your wallet'>
               <Row className='wallet'>
                 {passKeysProvider && erc4337Account && provider && passKeyAPI &&
-                  <ERC4337Account passKeysProvider={passKeysProvider} jsonRPCProvider={provider} address={erc4337Account} passKeyAPI={passKeyAPI} setLoading={setLoading} />
+                  <ERC4337Account passKeysProvider={passKeysProvider} jsonRPCProvider={provider} 
+                    address={erc4337Account} passKeyAPI={passKeyAPI} 
+                    incrementLoader={incrementLoader} decrementLoader={decrementLoader} />
                 }
               </Row>
             </LoadingOverlay>

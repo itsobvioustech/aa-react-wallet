@@ -22,9 +22,10 @@ export type ERC4337AccountProps = {
     jsonRPCProvider: ethers.providers.JsonRpcProvider,
     passKeyAPI: PassKeysAccountApi,
     address: string,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>
+    incrementLoader: () => void,
+    decrementLoader: () => void,
 }
-export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, passKeyAPI, setLoading} : ERC4337AccountProps) => {
+export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, passKeyAPI, incrementLoader, decrementLoader} : ERC4337AccountProps) => {
     const waw = useContext(AppContext)
     const knownUsers = useContext(KnownUsers)
     const [balance, setBalance] = useState<BigNumber>(BigNumber.from(0))
@@ -81,20 +82,20 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
             setPassKeysAccount(account)
         }
         getAccount()
-    }, [address])
+    }, [address, jsonRPCProvider])
 
     useEffect(() => {
         passKeyAPI.setTxnProgressCallback(txnProgressCallback)
         const getSigners = async () => {
-            setLoading(true)
+            incrementLoader()
             setActiveSigner(passKeyAPI.passKeyPair.keyId)
             if (passKeysAccount) {
                 setRemovePassKey('')
                 try{
                     const keys = await passKeysAccount.getAuthorisedKeys()
                     const passKeyIds = keys.map(x => x.keyId)
-                    if (!(activeSigner in passKeyIds)){
-                        const knownPassKey = knownUsers.find((user) => user.keyId in passKeyIds)
+                    if (!(passKeyIds.includes(activeSigner))){
+                        const knownPassKey = knownUsers.find((user) => passKeyIds.includes(user.keyId))
                         if (knownPassKey) {
                             changePassKeyPair(knownPassKey)
                         } else {
@@ -106,15 +107,14 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                     setAuthorisedKeys([])
                 }
             }
-            setLoading(false)
+            decrementLoader()
         }
         getSigners()
-        refreshBalances()
     }, [passKeysAccount, reloadPassKeyAccount])
 
     useEffect(() => {
         refreshBalances()
-    }, [passKeysProvider])
+    }, [passKeysProvider, address])
 
     useEffect(() => {
         passKeyAPI.setTxnProgressCallback(txnProgressCallback)
@@ -122,18 +122,19 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
     }, [txnProgress])
 
     const refreshBalances = async () => {
-        setLoading(true)
+        incrementLoader()
         const balance = await passKeysProvider.getBalance(address)
         const stakeBalance = await passKeysProvider.entryPoint.balanceOf(address)
         setBalance(balance)
         setStakeBalance(stakeBalance)
-        setLoading(false)
+        decrementLoader()
     }
 
     const send = () => {
         if (sendAmount && receiver) {
             const execute = async () => {
                 try{
+                    setTxnProgress(true)
                     let eth = ethers.utils.parseEther(sendAmount)
                     let signer = passKeysProvider.getSigner()
                     console.log("Provider : ", passKeysProvider)
@@ -144,7 +145,6 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                         data: "0x",
                         gasLimit: 40000,
                     })
-                    setTxnProgress(true)
                     console.log("Transaction : ", txn)
                     displayToast("Signed transaction hash - " + txn.hash)
                     console.log("Transaction hash : ", txn.hash)
@@ -154,7 +154,8 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                     setBalance(await passKeysProvider.getBalance(address))
                     setStakeBalance(await passKeysProvider.entryPoint.balanceOf(address))
                     setSendAmount('')
-                    setReceiver('')    
+                    setReceiver('')
+                    setReloadPassKeyAccount(receipt.transactionHash)    
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
                     displayErrorToast("Transaction failed  - " + e.message)
@@ -175,12 +176,12 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
         if (newPassKey && passKeysAccount) {
             const execute = async () => {
                 try{
+                    setTxnProgress(true)
                     let signer = passKeysProvider.getSigner()
                     let txn = await signer.sendTransaction({
                         to: address,
                         data: passKeysAccount.interface.encodeFunctionData("addPassKey", [newPassKey.keyId, newPassKey.pubKeyX, newPassKey.pubKeyY]),
                     })
-                    setTxnProgress(true)
                     console.log("Transaction : ", txn)
                     displayToast("Signed transaction hash - " + txn.hash)
                     console.log("Transaction hash : ", txn.hash)
@@ -205,12 +206,12 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
         if (removePassKey && passKeysAccount && authorisedKeys.includes(removePassKey) && removePassKey !== activeSigner) {
             const execute = async () => {
                 try{
+                    setTxnProgress(true)
                     let signer = passKeysProvider.getSigner()
                     let txn = await signer.sendTransaction({
                         to: address,
                         data: passKeysAccount.interface.encodeFunctionData("removePassKey", [removePassKey]),
                     })
-                    setTxnProgress(true)
                     console.log("Transaction : ", txn)
                     displayToast("Signed transaction hash - " + txn.hash)
                     console.log("Transaction hash : ", txn.hash)
