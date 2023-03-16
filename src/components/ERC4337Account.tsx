@@ -253,7 +253,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                 </Col>
             </Row>
             <Row>
-                <Col xs={6}>
+                <Col xs={12} md={6}>
                     <div className='balances'>
                         <p>Balance: { ethers.utils.formatEther(balance) }Ξ</p>
                         <p>Stake Balance: { ethers.utils.formatEther(stakeBalance) }Ξ</p>
@@ -284,7 +284,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                         <TxnUpdate tx={currentTransaction} passKeyProvider={passKeysProvider} bundlerRPCClient={bundlerRPCClient} />
                     </Row>
                 </Col>
-                <Col xs={6}>
+                <Col xs={12} md={6}>
                     <Container className='management'>
                         <Row>
                             <Col xs={3}>Active Signer</Col>
