@@ -84,3 +84,31 @@ body, html {
   font-size: large;
   font-weight: 700;
 }
+
+.account a {
+  margin-left: 10px;
+  color: black;
+}
+
+.account .refresh {
+  cursor: pointer;
+}
+
+.signer-hash, .passkey-id .list-group-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.TxnUpdate {
+  margin-top: 10px !important;
+  text-align: left;
+}
+
+.TxnUpdate .row {
+  margin-top: 5px !important;
+}
+
+.TxnUpdate .data {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -3,8 +3,9 @@ import { utils } from '@passwordless-id/webauthn'
 import { ethers, BigNumber } from 'ethers'
 import { UserOperationStruct } from '@account-abstraction/contracts'
 import { PassKeysAccount, PassKeysAccount__factory } from '@itsobvioustech/aa-passkeys-wallet'
-import { PassKeysAccountApi, PassKeyKeyPair, PassKeysProvider } from '@itsobvioustech/aa-passkeys-client'
-import { AppContext, KnownUsers } from '../AppContext'
+import { PassKeysAccountApi, PassKeyKeyPair, PassKeysProvider, BundlerRPClient } from '@itsobvioustech/aa-passkeys-client'
+import { AppContext, KnownUsers, AppConfigContext } from '../AppContext'
+import { TxnUpdate } from './TxnUpdate'
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
@@ -13,8 +14,9 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import Form from 'react-bootstrap/Form';
 import Spinner from 'react-bootstrap/Spinner';
 import Toast from 'react-bootstrap/Toast';
+import { HiOutlineExternalLink } from 'react-icons/hi'
 import { FaAddressCard } from 'react-icons/fa'
-import { MdSend, MdKey, MdKeyOff } from 'react-icons/md'
+import { MdSend, MdKey, MdKeyOff, MdRefresh } from 'react-icons/md'
 import { PassKeyIdStructOutput } from '@itsobvioustech/aa-passkeys-wallet/build/typechain-types/IPassKeysAccount'
 
 export type ERC4337AccountProps = {
@@ -28,6 +30,7 @@ export type ERC4337AccountProps = {
 export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, passKeyAPI, incrementLoader, decrementLoader} : ERC4337AccountProps) => {
     const waw = useContext(AppContext)
     const knownUsers = useContext(KnownUsers)
+    const currentNetwork = useContext(AppConfigContext)
     const [balance, setBalance] = useState<BigNumber>(BigNumber.from(0))
     const [stakeBalance, setStakeBalance] = useState<BigNumber>(BigNumber.from(0))
     const [sendAmount, setSendAmount] = useState<string>('')
@@ -43,6 +46,8 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
     const [toastMessage, setToastMessage] = useState("")
     const [toastStyle, setToastStyle] = useState("success")
     const [reloadPassKeyAccount, setReloadPassKeyAccount] = useState<string>("")
+    const [bundlerRPCClient, setBundlerRPCClient] = useState<BundlerRPClient>(new BundlerRPClient(currentNetwork.bundlerUrl, currentNetwork.chainId))
+    const [currentTransaction, setCurrentTransaction] = useState<Promise<ethers.providers.TransactionResponse>>()
 
     const txnProgressCallback = (userop: UserOperationStruct, state: string) => {
         setShowToast(true)
@@ -75,6 +80,10 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
         " Transaction - " + 
         message.transactionHash)
     }
+
+    useEffect(() => {
+        setBundlerRPCClient(new BundlerRPClient(currentNetwork.bundlerUrl, currentNetwork.chainId))
+    }, [currentNetwork])
   
     useEffect(() => {
         const getAccount = async () => {
@@ -130,6 +139,14 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
         decrementLoader()
     }
 
+    const trackTransaction = async (transaction: Promise<ethers.providers.TransactionResponse>): Promise<string> => {
+        setCurrentTransaction(transaction)
+        const txn = await transaction
+        let receipt = await passKeysProvider.waitForTransaction(txn.hash, 1, 60000)
+        let chainHash = await bundlerRPCClient.getUserOpReceipt(receipt.transactionHash)
+        return chainHash?.receipt?.transactionHash
+    }
+
     const send = () => {
         if (sendAmount && receiver) {
             const execute = async () => {
@@ -137,25 +154,18 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                     setTxnProgress(true)
                     let eth = ethers.utils.parseEther(sendAmount)
                     let signer = passKeysProvider.getSigner()
-                    console.log("Provider : ", passKeysProvider)
-                    console.log("Signer : ", signer)
-                    let txn = await signer.sendTransaction({
+                    let txn = signer.sendTransaction({
                         to: receiver,
                         value: eth,
                         data: "0x",
                         gasLimit: 40000,
                     })
-                    console.log("Transaction : ", txn)
-                    displayToast("Signed transaction hash - " + txn.hash)
-                    console.log("Transaction hash : ", txn.hash)
-                    let receipt = await passKeysProvider.waitForTransaction(txn.hash, 1, 60000)
-                    console.log("Transaction receipt : ", receipt)
-                    displayTxnReceipt(receipt)
+                    const txnHash = await trackTransaction(txn)
                     setBalance(await passKeysProvider.getBalance(address))
                     setStakeBalance(await passKeysProvider.entryPoint.balanceOf(address))
                     setSendAmount('')
                     setReceiver('')
-                    setReloadPassKeyAccount(receipt.transactionHash)    
+                    setReloadPassKeyAccount(txnHash)
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
                     displayErrorToast("Transaction failed  - " + e.message)
@@ -178,20 +188,15 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                 try{
                     setTxnProgress(true)
                     let signer = passKeysProvider.getSigner()
-                    let txn = await signer.sendTransaction({
+                    let txn = signer.sendTransaction({
                         to: address,
                         data: passKeysAccount.interface.encodeFunctionData("addPassKey", [newPassKey.keyId, newPassKey.pubKeyX, newPassKey.pubKeyY]),
                     })
-                    console.log("Transaction : ", txn)
-                    displayToast("Signed transaction hash - " + txn.hash)
-                    console.log("Transaction hash : ", txn.hash)
-                    let receipt = await passKeysProvider.waitForTransaction(txn.hash, 1, 60000)
-                    console.log("Transaction receipt : ", receipt)
-                    displayTxnReceipt(receipt)
+                    const txnHash = await trackTransaction(txn)
                     setBalance(await passKeysProvider.getBalance(address))
                     setStakeBalance(await passKeysProvider.entryPoint.balanceOf(address))
                     setNewPassKey(undefined)    
-                    setReloadPassKeyAccount(receipt.transactionHash)
+                    setReloadPassKeyAccount(txnHash)
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
                     displayErrorToast("Transaction failed  - " + e.message)
@@ -208,20 +213,15 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                 try{
                     setTxnProgress(true)
                     let signer = passKeysProvider.getSigner()
-                    let txn = await signer.sendTransaction({
+                    let txn = signer.sendTransaction({
                         to: address,
                         data: passKeysAccount.interface.encodeFunctionData("removePassKey", [removePassKey]),
                     })
-                    console.log("Transaction : ", txn)
-                    displayToast("Signed transaction hash - " + txn.hash)
-                    console.log("Transaction hash : ", txn.hash)
-                    let receipt = await passKeysProvider.waitForTransaction(txn.hash, 1, 60000)
-                    console.log("Transaction receipt : ", receipt)
-                    displayTxnReceipt(receipt)
+                    const txnHash = await trackTransaction(txn)
                     setBalance(await passKeysProvider.getBalance(address))
                     setStakeBalance(await passKeysProvider.entryPoint.balanceOf(address))
                     setNewPassKey(undefined)    
-                    setReloadPassKeyAccount(receipt.transactionHash)
+                    setReloadPassKeyAccount(txnHash)
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
                     displayErrorToast("Transaction failed  - " + e.message)
@@ -249,11 +249,19 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
 
     return(
         <Container className='account'>
-            <Row xs={12}>
-                <p className='address'><FaAddressCard /> {address}</p>
+            <Row className="justify-content-md-center">
+                <Col xs={1}>
+                    <MdRefresh onClick={ refreshBalances } className='refresh' />
+                    {currentNetwork.explorerUrl &&
+                        <a href={currentNetwork.explorerUrl + 'address/' + address} target='_blank'><HiOutlineExternalLink /></a>
+                    }
+                </Col>
+                <Col xs={6}>
+                    <p className='address'><FaAddressCard /> {address}</p>
+                </Col>
             </Row>
             <Row>
-                <Col>
+                <Col xs={6}>
                     <div className='balances'>
                         <p>Balance: { ethers.utils.formatEther(balance) }Ξ</p>
                         <p>Stake Balance: { ethers.utils.formatEther(stakeBalance) }Ξ</p>
@@ -279,19 +287,23 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                             </Col>
                         </Row>
                     </div>
+                    <Row className='TxnUpdate'>
+                        <br/>
+                        <TxnUpdate tx={currentTransaction} passKeyProvider={passKeysProvider} bundlerRPCClient={bundlerRPCClient} />
+                    </Row>
                 </Col>
-                <Col>
+                <Col xs={6}>
                     <Container className='management'>
                         <Row>
                             <Col xs={3}>Active Signer</Col>
-                            <Col> {activeSigner} </Col>
+                            <Col xs={9} className='signer-hash'> {activeSigner} </Col>
                         </Row>
                         <Row>
                         { authorisedKeys.length > 0 && 
                             <Container className='signers'>
                                 <Row>
                                     <Col xs={3}>Other Signers</Col>
-                                    <Col className='passkey-id'>
+                                    <Col className='passkey-id signer-hash'>
                                         <ListGroup>
                                             { authorisedKeys.map( (key, index) => <ListGroup.Item key={index}>{key}</ListGroup.Item>) }
                                         </ListGroup>
@@ -356,8 +368,8 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                 </Col>
             </Row>
             <br/>
-            <Row>
-                <Col xs={8}>
+            <Row className="justify-content-md-center">
+                <Col xs={4}>
                 <Toast onClose={() => setShowToast(false)} show={showToast} delay={15000} bg={toastStyle} autohide>
                     <Toast.Header>
                     <strong className="me-auto">Txn Update</strong>
