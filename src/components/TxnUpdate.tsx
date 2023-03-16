@@ -19,6 +19,9 @@ export const TxnUpdate = ( {tx, passKeyProvider, bundlerRPCClient} : TxnUpdatePr
     useEffect(() => {
         const getTxStatus = async () => {
             if (tx) {
+                setTxHash('')
+                setBlockHash('')
+                setTxStatus('Pending')
                 const txnResponse = await tx
                 const receipt = await passKeyProvider.waitForTransaction(txnResponse.hash,1, 60000)
                 const chainReceipt = await bundlerRPCClient.getUserOpReceipt(receipt.transactionHash)

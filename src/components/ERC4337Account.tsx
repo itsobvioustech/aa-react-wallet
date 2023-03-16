@@ -72,15 +72,6 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
         setToastMessage(message)
     }
 
-    const displayTxnReceipt = (message: ethers.providers.TransactionReceipt):void => {
-        displayToast("Transaction succeded  Block - " + 
-        message.blockHash + 
-        " Block Number - " +
-        message.blockNumber +
-        " Transaction - " + 
-        message.transactionHash)
-    }
-
     useEffect(() => {
         setBundlerRPCClient(new BundlerRPClient(currentNetwork.bundlerUrl, currentNetwork.chainId))
     }, [currentNetwork])
@@ -144,6 +135,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
         const txn = await transaction
         let receipt = await passKeysProvider.waitForTransaction(txn.hash, 1, 60000)
         let chainHash = await bundlerRPCClient.getUserOpReceipt(receipt.transactionHash)
+        displayToast("Transaction complete")
         return chainHash?.receipt?.transactionHash
     }
 
