@@ -30,7 +30,7 @@ const mumbaiConfig: AppConfig = {
     factoryAddress: process.env.MUMBAI_FACTORY_ADDRESS || '0xD54D986f9eb837Bc05190135859329F8Df210B60',
     bundlerUrl: process.env.MUMBAI_BUNDLER_URL || 'https://mumbai-bundler.wallet.obvious.technology/rpc',
     rpcUrl: process.env.MUMBAI_RPC_URL || 'https://rpc.ankr.com/polygon_mumbai',
-    enabled: process.env.ENABLE_MUMBAI_NETWORK ? process.env.ENABLE_MUMBAI_NETWORK ==='true' : true,
+    enabled: process.env.ENABLE_MUMBAI_NETWORK ? process.env.ENABLE_MUMBAI_NETWORK === 'true' : true,
     explorerUrl: 'https://mumbai.polygonscan.com/',
 };
 const baseConfig: AppConfig = {
