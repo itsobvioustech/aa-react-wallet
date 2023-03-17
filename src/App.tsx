@@ -8,7 +8,7 @@ function App() {
   return (
     <div>
         <Alert show={show} variant='secondary' onClose={ _ => setShow(false)} dismissible>
-          <Alert.Heading>Account Abstracted wallet with PassKeys</Alert.Heading>
+          <Alert.Heading>AA Wallet with PassKeys</Alert.Heading>
           <p>
             This is a demo of an <a className='alert-link' target="_blank" href="https://github.com/eth-infinitism/account-abstraction">ERC4337</a> 
             wallet implemented with PassKeys <a className='alert-link' target="_blank" href="https://developer.apple.com/passkeys/">Apple</a> / 
