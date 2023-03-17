@@ -1,20 +1,19 @@
 import React from 'react';
 import './App.css';
-import { CloseButton, Alert, Image } from 'react-bootstrap';
+import { Alert } from 'react-bootstrap';
 import CheckWebAuthn from './components/CheckWebAuthn';
 
 function App() {
   const [show, setShow] = React.useState(true);
   return (
     <div>
-        <Alert show={show} variant='secondary'>
-          <CloseButton onClick={ _ => setShow(false)}/>
+        <Alert show={show} variant='secondary' onClose={ _ => setShow(false)} dismissible>
           <Alert.Heading>Account Abstracted wallet with PassKeys</Alert.Heading>
           <p>
-            This is a demo of an <Alert.Link href="https://github.com/eth-infinitism/account-abstraction">ERC4337</Alert.Link> wallet implemented 
-            with PassKeys <Alert.Link href="https://developer.apple.com/passkeys/">Apple</Alert.Link> / 
-            <Alert.Link href="https://developers.google.com/identity/passkeys">Google</Alert.Link>. This should work on any modern browser
-            that supports <Alert.Link href="https://www.w3.org/TR/webauthn-2/">WebAuthn</Alert.Link>.
+            This is a demo of an <a className='alert-link' target="_blank" href="https://github.com/eth-infinitism/account-abstraction">ERC4337</a> 
+            wallet implemented with PassKeys <a className='alert-link' target="_blank" href="https://developer.apple.com/passkeys/">Apple</a> / 
+            <a className='alert-link' target="_blank" href="https://developers.google.com/identity/passkeys">Google</a>. This should work on any modern browser
+            that supports <a className='alert-link' target="_blank" href="https://www.w3.org/TR/webauthn-2/">WebAuthn</a>.
           </p>
           <p>
             To get started 
@@ -33,8 +32,8 @@ function App() {
           </p>
           <p>
             Gory internal details and the codebase powering this coming soon in a blog 
-            post <Alert.Link href="https://www.obvious.technology/blogs">from Obvious</Alert.Link>. 
-            I'm available <Alert.Link href="https://twitter.com/jebui">@jebui</Alert.Link> on Twitter.
+            post <a className='alert-link' target="_blank" href="https://www.obvious.technology/blogs">from Obvious</a>. 
+            I'm available <a className='alert-link' target="_blank" href="https://twitter.com/jebui">@jebui</a> on Twitter.
           </p>
         </Alert>
       <div className="App">
