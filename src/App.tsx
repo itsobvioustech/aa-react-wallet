@@ -10,10 +10,10 @@ function App() {
         <Alert show={show} variant='secondary' onClose={ _ => setShow(false)} dismissible>
           <Alert.Heading>AA Wallet with PassKeys</Alert.Heading>
           <p>
-            This is a demo of an <a className='alert-link' target="_blank" href="https://github.com/eth-infinitism/account-abstraction">ERC4337</a> 
-            wallet implemented with PassKeys <a className='alert-link' target="_blank" href="https://developer.apple.com/passkeys/">Apple</a> / 
-            <a className='alert-link' target="_blank" href="https://developers.google.com/identity/passkeys">Google</a>. This should work on any modern browser
-            that supports <a className='alert-link' target="_blank" href="https://www.w3.org/TR/webauthn-2/">WebAuthn</a>.
+            This is a demo of an <a className='alert-link' target="_blank" rel="noreferrer" href="https://github.com/eth-infinitism/account-abstraction">ERC4337</a> 
+            wallet implemented with PassKeys <a className='alert-link' target="_blank" rel="noreferrer" href="https://developer.apple.com/passkeys/">Apple</a> / 
+            <a className='alert-link' target="_blank" rel="noreferrer" href="https://developers.google.com/identity/passkeys">Google</a>. This should work on any modern browser
+            that supports <a className='alert-link' target="_blank" rel="noreferrer" href="https://www.w3.org/TR/webauthn-2/">WebAuthn</a>.
           </p>
           <p>
             To get started 
@@ -31,9 +31,9 @@ function App() {
             </ul>            
           </p>
           <p>
-            Gory internal details and the codebase powering this coming soon in a blog 
-            post <a className='alert-link' target="_blank" href="https://www.obvious.technology/blogs">from Obvious</a>. 
-            I'm available <a className='alert-link' target="_blank" href="https://twitter.com/jebui">@jebui</a> on Twitter.
+            Codebase powering this account <a className='alert-link' target="_blank" rel="noreferrer" href="https://github.com/itsobvioustech/aa-passkeys-wallet">here</a> additional details coming soon in a blog 
+            post <a className='alert-link' target="_blank" rel="noreferrer" href="https://www.obvious.technology/blogs">from Obvious</a>. 
+            I'm available <a className='alert-link' target="_blank" rel="noreferrer" href="https://twitter.com/jebui">@jebui</a> on Twitter.
           </p>
         </Alert>
       <div className="App">
