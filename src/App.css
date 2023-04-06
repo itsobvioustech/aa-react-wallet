@@ -114,3 +114,11 @@ body, html {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.erc20tokens .row {
+  margin-top: 5px !important;
+}
+
+.erc20-token-send input {
+  margin-top: 5px !important;
+}

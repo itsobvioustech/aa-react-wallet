@@ -38,9 +38,9 @@ export const ERC20Tokens = ( {jsonRPCProvider, address, tokenSender, reloadPassK
                 <Modal.Header closeButton>
                     <Modal.Title>Send - {tokenName} </Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
+                <Modal.Body className="erc20-token-send">
                     <Form.Control type="text" placeholder="To Address" value={ receiver } onChange={ e => setReceiver(e.target.value) } />
-                    <Form.Control type="text" placeholder="Amount" value={ sendAmount } onChange={ e => setSendAmount(e.target.value) } />
+                    <Form.Control type="text" placeholder={"Amount (max " + utils.formatUnits(tokenBalance, tokenDecimals) + ")"} value={ sendAmount } onChange={ e => setSendAmount(e.target.value) } />
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={handleClose}>
@@ -60,8 +60,10 @@ export const ERC20Tokens = ( {jsonRPCProvider, address, tokenSender, reloadPassK
                 </Modal.Footer>
             </Modal>
             {currentNetwork.erc20Tokens &&
-                <Row>
-                    <Row> Token Balances </Row>
+                <Row className="erc20tokens">
+                    <Row> 
+                        <Col xs={12}>Token Balances</Col> 
+                    </Row>
                     {currentNetwork.erc20Tokens.map(tokenAddress => 
                         <ERC20Token key={tokenAddress} tokenAddress={tokenAddress} jsonRPCProvider={jsonRPCProvider} reloadPassKeyAccount={reloadPassKeyAccount}
                         address={address} tokenSender={tokenSender} handleShow={handleShow}/>
@@ -127,12 +129,16 @@ export const ERC20Token = ( {tokenAddress, jsonRPCProvider, address, tokenSender
     }, [tokenAddress, jsonRPCProvider, address, reloadPassKeyAccount])
 
     return (
-        <Row>
-            <Col>{tokenName}</Col>
-            <Col>{tokenSymbol}</Col>
-            <Col>{utils.formatUnits(balance, decimals)}</Col>
-            <Col>{balance.gt(0) && <MdSend onClick={ () => handleShow(tokenAddress, balance, tokenName, decimals) }/>}</Col>
-        </Row>
+        <div>
+        {balance.gt(0) &&
+            <Row>
+                <Col xs={6}>{tokenName}</Col>
+                <Col xs={2}>{tokenSymbol}</Col>
+                <Col xs={3}>{utils.formatUnits(balance, decimals)}</Col>
+                <Col xs={1}><MdSend onClick={ () => handleShow(tokenAddress, balance, tokenName, decimals) }/></Col>
+            </Row>
+        }
+        </div>
     )
 }
 
