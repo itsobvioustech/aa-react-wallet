@@ -12,6 +12,7 @@ export interface AppConfig {
     rpcUrl: string;
     enabled: boolean;
     explorerUrl?: string;
+    erc20Tokens?: string[];
 }
 const localConfig: AppConfig = {
     networkName: 'local',
@@ -21,6 +22,7 @@ const localConfig: AppConfig = {
     bundlerUrl: process.env.ANVIL_BUNDLER_URL || 'http://localhost:9000/rpc',
     rpcUrl: process.env.ANVIL_RPC_URL || 'http://localhost:8545',
     enabled: process.env.ENABLE_LOCAL_NETWORK ? process.env.ENABLE_LOCAL_NETWORK  === 'true' : true,
+    erc20Tokens: process.env.LOCAL_ERC20_TOKENS ? JSON.parse(process.env.LOCAL_ERC20_TOKENS) : ['0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9']
 };
 
 const mumbaiConfig: AppConfig = {
@@ -32,6 +34,7 @@ const mumbaiConfig: AppConfig = {
     rpcUrl: process.env.MUMBAI_RPC_URL || 'https://rpc.ankr.com/polygon_mumbai',
     enabled: process.env.ENABLE_MUMBAI_NETWORK ? process.env.ENABLE_MUMBAI_NETWORK === 'true' : true,
     explorerUrl: 'https://mumbai.polygonscan.com/',
+    erc20Tokens: process.env.MUMBAI_ERC20_TOKENS ? JSON.parse(process.env.MUMBAI_ERC20_TOKENS) :  [],
 };
 const baseConfig: AppConfig = {
     networkName: 'Goerli Base',
@@ -42,6 +45,7 @@ const baseConfig: AppConfig = {
     rpcUrl: process.env.BASE_RPC_URL || 'https://goerli.base.org',
     enabled: process.env.ENABLE_BASE_NETWORK ? process.env.ENABLE_BASE_NETWORK === 'true' : true,
     explorerUrl: 'https://goerli.basescan.org/',
+    erc20Tokens: process.env.BASE_ERC20_TOKENS ? JSON.parse(process.env.BASE_ERC20_TOKENS) :  [],
 };
 
 export const networkConfig = [localConfig, mumbaiConfig, baseConfig].filter((c) => c.enabled);

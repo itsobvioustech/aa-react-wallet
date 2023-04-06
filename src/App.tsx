@@ -15,7 +15,7 @@ function App() {
             <a className='alert-link' target="_blank" rel="noreferrer" href="https://developers.google.com/identity/passkeys">Google</a>. This should work on any modern browser
             that supports <a className='alert-link' target="_blank" rel="noreferrer" href="https://www.w3.org/TR/webauthn-2/">WebAuthn</a>.
           </p>
-          <p>
+          <div>
             To get started 
             <ul>
               <li>Pick a <i>Username</i> and click Add a PassKey.</li>
@@ -29,7 +29,7 @@ function App() {
               <li>To use the wallet on a different device, open this site on that device, enter the wallet <i>Address</i> and click Authenticate.</li>
               <li>Authenticate with any of the passkeys added on the wallet to operate the wallet.</li>
             </ul>            
-          </p>
+          </div>
           <p>
             Codebase powering this account <a className='alert-link' target="_blank" rel="noreferrer" href="https://github.com/itsobvioustech/aa-passkeys-wallet">here</a> additional details coming soon in a blog 
             post <a className='alert-link' target="_blank" rel="noreferrer" href="https://www.obvious.technology/blogs">from Obvious</a>. 

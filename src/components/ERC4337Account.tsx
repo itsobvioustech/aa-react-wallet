@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react'
 import { utils } from '@passwordless-id/webauthn'
-import { ethers, BigNumber } from 'ethers'
+import { ethers, BigNumber, Contract } from 'ethers'
 import { UserOperationStruct } from '@account-abstraction/contracts'
 import { PassKeysAccount, PassKeysAccount__factory } from '@itsobvioustech/aa-passkeys-wallet'
 import { PassKeysAccountApi, PassKeyKeyPair, PassKeysProvider, BundlerRPClient } from '@itsobvioustech/aa-passkeys-client'
@@ -18,6 +18,8 @@ import { HiOutlineExternalLink } from 'react-icons/hi'
 import { FaAddressCard } from 'react-icons/fa'
 import { MdSend, MdKey, MdKeyOff, MdRefresh } from 'react-icons/md'
 import { PassKeyIdStructOutput } from '@itsobvioustech/aa-passkeys-wallet/build/typechain-types/IPassKeysAccount'
+import { ERC20Tokens } from './ERC20Tokens'
+import ERC20TokenABI from "@openzeppelin/contracts/build/contracts/ERC20.json"
 
 export type ERC4337AccountProps = {
     passKeysProvider: PassKeysProvider,
@@ -127,6 +129,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
         const stakeBalance = await passKeysProvider.entryPoint.balanceOf(address)
         setBalance(balance)
         setStakeBalance(stakeBalance)
+        setReloadPassKeyAccount(Date.now().toString())
         decrementLoader()
     }
 
@@ -153,11 +156,8 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                         gasLimit: 40000,
                     })
                     const txnHash = await trackTransaction(txn)
-                    setBalance(await passKeysProvider.getBalance(address))
-                    setStakeBalance(await passKeysProvider.entryPoint.balanceOf(address))
                     setSendAmount('')
                     setReceiver('')
-                    setReloadPassKeyAccount(txnHash)
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
                     displayErrorToast("Transaction failed  - " + e.message)
@@ -166,6 +166,27 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
             }
             execute()
         }
+    }
+
+    const sendERC20 = (token: string, to: string, amount: BigNumber) => {
+        const execute = async () => {
+            try{
+                setTxnProgress(true)
+                let signer = passKeysProvider.getSigner()
+                const contract = new Contract(token, ERC20TokenABI.abi, jsonRPCProvider)
+                let txn = signer.sendTransaction({
+                    to: token,
+                    data: contract.interface.encodeFunctionData("transfer", [to, amount]),
+                    gasLimit: 40000,
+                })
+                const txnHash = await trackTransaction(txn)
+            } catch (e: any) {
+                console.log("Error waiting for transaction : ", e.message)
+                displayErrorToast("Transaction failed  - " + e.message)
+            }
+            setTxnProgress(false)
+        }
+        execute()
     }
 
     const createPassKey = async () => {
@@ -185,10 +206,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                         data: passKeysAccount.interface.encodeFunctionData("addPassKey", [newPassKey.keyId, newPassKey.pubKeyX, newPassKey.pubKeyY]),
                     })
                     const txnHash = await trackTransaction(txn)
-                    setBalance(await passKeysProvider.getBalance(address))
-                    setStakeBalance(await passKeysProvider.entryPoint.balanceOf(address))
                     setNewPassKey(undefined)    
-                    setReloadPassKeyAccount(txnHash)
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
                     displayErrorToast("Transaction failed  - " + e.message)
@@ -210,10 +228,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                         data: passKeysAccount.interface.encodeFunctionData("removePassKey", [removePassKey]),
                     })
                     const txnHash = await trackTransaction(txn)
-                    setBalance(await passKeysProvider.getBalance(address))
-                    setStakeBalance(await passKeysProvider.entryPoint.balanceOf(address))
                     setNewPassKey(undefined)    
-                    setReloadPassKeyAccount(txnHash)
                 } catch (e: any) {
                     console.log("Error waiting for transaction : ", e.message)
                     displayErrorToast("Transaction failed  - " + e.message)
@@ -277,6 +292,9 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                                     /> Send <MdSend />
                                 </Button>
                             </Col>
+                        </Row>
+                        <Row>
+                            <ERC20Tokens jsonRPCProvider={jsonRPCProvider} address={address} tokenSender={sendERC20} reloadPassKeyAccount={reloadPassKeyAccount} />
                         </Row>
                     </div>
                     <Row className='TxnUpdate'>
