@@ -177,7 +177,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                 let txn = signer.sendTransaction({
                     to: token,
                     data: contract.interface.encodeFunctionData("transfer", [to, amount]),
-                    gasLimit: 40000,
+                    gasLimit: 90000,
                 })
                 const txnHash = await trackTransaction(txn)
             } catch (e: any) {
