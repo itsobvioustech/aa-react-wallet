@@ -157,7 +157,7 @@ export const CheckWebAuthn = () => {
         <Container>
           <Row className='header status'>
             <Col xs={4}>
-              WebAuthn is available
+              WebAuthn ✅
             </Col>
             <Col xs={3}>
               Chain - {provider?._network?.chainId}
