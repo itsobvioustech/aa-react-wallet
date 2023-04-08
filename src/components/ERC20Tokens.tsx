@@ -61,9 +61,7 @@ export const ERC20Tokens = ( {jsonRPCProvider, address, tokenSender, reloadPassK
             </Modal>
             {currentNetwork.erc20Tokens &&
                 <Row className="erc20tokens">
-                    <Row> 
-                        <Col xs={12}>Token Balances</Col> 
-                    </Row>
+                    <Col xs={12} className="balance-header">ERC20 Token Balances</Col> 
                     {currentNetwork.erc20Tokens.map(tokenAddress => 
                         <ERC20Token key={tokenAddress} tokenAddress={tokenAddress} jsonRPCProvider={jsonRPCProvider} reloadPassKeyAccount={reloadPassKeyAccount}
                         address={address} tokenSender={tokenSender} handleShow={handleShow}/>

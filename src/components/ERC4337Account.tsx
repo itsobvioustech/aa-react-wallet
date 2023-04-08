@@ -290,6 +290,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                         </Modal.Footer>
                     </Modal>
                     <Row>
+                        <Col xs={12} className="balance-header">Native Token Balance</Col> 
                         <Col xs={11}>Balance: { ethers.utils.formatEther(balance) }Ξ</Col>
                         <Col xs={11}>Stake Balance: { ethers.utils.formatEther(stakeBalance) }Ξ</Col>
                         <Col xs={1}> <MdSend onClick={() => setShow(true)} /></Col>

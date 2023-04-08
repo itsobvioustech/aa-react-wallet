@@ -86,6 +86,7 @@ body, html {
   overflow: hidden;
   text-overflow: ellipsis;
   margin-bottom: 10px;
+  margin-left: 5px;
 }
 
 .account a {
@@ -95,7 +96,7 @@ body, html {
 
 .account .refresh {
   cursor: pointer;
-  margin-right: 10px;
+  margin-right: 5px;
 }
 
 .signer-hash, .passkey-id .list-group-item {
@@ -123,4 +124,9 @@ body, html {
 
 .erc20-token-send input, .native-token-send input {
   margin-top: 5px !important;
+}
+
+.balance-header {
+  border-bottom-color: darkgray;
+  border-bottom-style: solid;
 }
