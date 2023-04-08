@@ -165,7 +165,7 @@ export const CheckWebAuthn = () => {
             <Col xs={4}>
               <Dropdown onSelect={e => setCurrentNetwork(knownNetworks.get(e!)!)}>
                 <Dropdown.Toggle variant="secondary" id="dropdown-basic">
-                  Network { currentNetwork.networkName }
+                  { currentNetwork.networkName }
                 </Dropdown.Toggle>
 
                 <Dropdown.Menu>
