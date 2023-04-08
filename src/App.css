@@ -86,17 +86,16 @@ body, html {
   overflow: hidden;
   text-overflow: ellipsis;
   margin-bottom: 10px;
-  margin-left: 5px;
 }
 
 .account a {
-  margin-left: 10px;
+  margin-left: 5px;
+  margin-right: 5px;
   color: black;
 }
 
 .account .refresh {
   cursor: pointer;
-  margin-right: 5px;
 }
 
 .signer-hash, .passkey-id .list-group-item {
