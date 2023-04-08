@@ -182,7 +182,7 @@ export const CheckWebAuthn = () => {
             <fieldset>
               <Row xs={12}>
                 <Col xs={8}>
-                <Form.Control type="text" placeholder="Username" onChange={ e => setUserName(e.target.value)} />
+                <Form.Control type="text" placeholder="PassKey Name" onChange={ e => setUserName(e.target.value)} />
                 </Col>
                 <Col xs={4}>
                 <Button onClick={registerUser} type='button'>Add a PassKey</Button>
