@@ -17,8 +17,8 @@ export interface AppConfig {
 const localConfig: AppConfig = {
     networkName: 'local',
     chainId: 31337,
-    entryPointAddress: process.env.ANVIL_ENTRYPOINT_ADDRESS || '0xCAe2338678caBc60A49B30678b25eA7aB02b4e6F',
-    factoryAddress: process.env.ANVIL_FACTORY_ADDRESS || '0xD54D986f9eb837Bc05190135859329F8Df210B60',
+    entryPointAddress: process.env.ANVIL_ENTRYPOINT_ADDRESS || '0x18207fAF24BC533F4eb6f4F5A3567DC02FF7DF73',
+    factoryAddress: process.env.ANVIL_FACTORY_ADDRESS || '0x07d1EEB0Ba1B22aBfAC39310848e26B7a7118dC1',
     bundlerUrl: process.env.ANVIL_BUNDLER_URL || 'http://localhost:9000/rpc',
     rpcUrl: process.env.ANVIL_RPC_URL || 'http://localhost:8545',
     enabled: process.env.ENABLE_LOCAL_NETWORK ? process.env.ENABLE_LOCAL_NETWORK  === 'true' : true,

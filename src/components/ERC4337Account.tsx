@@ -6,14 +6,7 @@ import { PassKeysAccount, PassKeysAccount__factory } from '@itsobvioustech/aa-pa
 import { PassKeysAccountApi, PassKeyKeyPair, PassKeysProvider, BundlerRPClient } from '@itsobvioustech/aa-passkeys-client'
 import { AppContext, KnownUsers, AppConfigContext } from '../AppContext'
 import { TxnUpdate } from './TxnUpdate'
-import Button from 'react-bootstrap/Button';
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import ListGroup from 'react-bootstrap/ListGroup';
-import Form from 'react-bootstrap/Form';
-import Spinner from 'react-bootstrap/Spinner';
-import Toast from 'react-bootstrap/Toast';
+import { Button, Container, Row, Col, ListGroup, Form, Spinner, Toast, Modal, Accordion } from 'react-bootstrap';
 import { HiOutlineExternalLink } from 'react-icons/hi'
 import { FaAddressCard } from 'react-icons/fa'
 import { MdSend, MdKey, MdKeyOff, MdRefresh } from 'react-icons/md'
@@ -50,6 +43,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
     const [reloadPassKeyAccount, setReloadPassKeyAccount] = useState<string>("")
     const [bundlerRPCClient, setBundlerRPCClient] = useState<BundlerRPClient>(new BundlerRPClient(currentNetwork.bundlerUrl, currentNetwork.chainId))
     const [currentTransaction, setCurrentTransaction] = useState<Promise<ethers.providers.TransactionResponse>>()
+    const [show, setShow] = useState(false)
 
     const txnProgressCallback = (userop: UserOperationStruct, state: string) => {
         setShowToast(true)
@@ -163,6 +157,7 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
                     displayErrorToast("Transaction failed  - " + e.message)
                 }
                 setTxnProgress(false)
+                setShow(false)
             }
             execute()
         }
@@ -253,139 +248,162 @@ export const ERC4337Account = ( { passKeysProvider, jsonRPCProvider, address, pa
             setActiveSigner(passKeyAPI.passKeyPair.keyId)
         }
     }
+    const handleClose = () => setShow(false);
 
     return(
         <Container className='account'>
             <Row className="justify-content-md-center">
-                <Col xs={1}>
+                <Col xs={12} className='address'>
                     <MdRefresh onClick={ refreshBalances } className='refresh' />
                     {currentNetwork.explorerUrl &&
                         <a href={currentNetwork.explorerUrl + 'address/' + address} target='_blank'><HiOutlineExternalLink /></a>
                     }
-                </Col>
-                <Col xs={6}>
-                    <p className='address'><FaAddressCard /> {address}</p>
+                    <FaAddressCard /> {address}
                 </Col>
             </Row>
-            <Row>
+            <Row className='balances'>
                 <Col xs={12} md={6}>
-                    <div className='balances'>
-                        <p>Balance: { ethers.utils.formatEther(balance) }Ξ</p>
-                        <p>Stake Balance: { ethers.utils.formatEther(stakeBalance) }Ξ</p>
-                        <Row>
-                            <Col xs={4}>
-                                <Form.Control type="text" placeholder="Amount" value={ sendAmount } onChange={ e => setSendAmount(e.target.value) } />
-                            </Col>
-                            <Col xs={4}>
-                                <Form.Control type="text" placeholder="Receiver" value={ receiver } onChange={ e=> setReceiver(e.target.value) } />
-                            </Col>
-                            <Col xs={4}>
-                                <Button onClick={ send } disabled={ txnProgress || (authorisedKeys.length>0 && !authorisedKeys.includes(activeSigner) )
-                                    || sendAmount.length === 0 || receiver.length === 0 || !ethers.utils.isAddress(receiver) }> 
-                                    <Spinner
-                                        as="span"
-                                        animation="grow"
-                                        size="sm"
-                                        role="status"
-                                        aria-hidden="true"
-                                        hidden={!txnProgress}
-                                    /> Send <MdSend />
-                                </Button>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <ERC20Tokens jsonRPCProvider={jsonRPCProvider} address={address} tokenSender={sendERC20} reloadPassKeyAccount={reloadPassKeyAccount} />
-                        </Row>
-                    </div>
-                    <Row className='TxnUpdate'>
-                        <br/>
-                        <TxnUpdate tx={currentTransaction} passKeyProvider={passKeysProvider} bundlerRPCClient={bundlerRPCClient} />
+                    <Modal show={show} onHide={handleClose}>
+                        <Modal.Header closeButton>
+                            <Modal.Title>Send Native Token </Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body className="native-token-send">
+                            <Form.Control type="text" placeholder="To Address" value={ receiver } onChange={ e => setReceiver(e.target.value) } />
+                            <Form.Control type="text" placeholder={"Amount (max " + ethers.utils.formatEther(balance) + ")"} value={ sendAmount } onChange={ e => setSendAmount(e.target.value) } />
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={handleClose}>
+                                Cancel
+                            </Button>
+                            <Button variant="primary" onClick={ send } disabled={ txnProgress || (authorisedKeys.length>0 && !authorisedKeys.includes(activeSigner) )
+                                    || sendAmount.length === 0 || receiver.length === 0 || !ethers.utils.isAddress(receiver) }>
+                                <Spinner
+                                    as="span"
+                                    animation="grow"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                    hidden={!txnProgress}
+                                />
+                                Send <MdSend />
+                            </Button>
+                        </Modal.Footer>
+                    </Modal>
+                    <Row>
+                        <Col xs={11}>Balance: { ethers.utils.formatEther(balance) }Ξ</Col>
+                        <Col xs={11}>Stake Balance: { ethers.utils.formatEther(stakeBalance) }Ξ</Col>
+                        <Col xs={1}> <MdSend onClick={() => setShow(true)} /></Col>
                     </Row>
                 </Col>
                 <Col xs={12} md={6}>
-                    <Container className='management'>
-                        <Row>
-                            <Col xs={3}>Active Signer</Col>
-                            <Col xs={9} className='signer-hash'> {activeSigner} </Col>
-                        </Row>
-                        <Row>
-                        { authorisedKeys.length > 0 && 
-                            <Container className='signers'>
-                                <Row>
-                                    <Col xs={3}>Other Signers</Col>
-                                    <Col className='passkey-id signer-hash'>
-                                        <ListGroup>
-                                            { authorisedKeys.map( (key, index) => <ListGroup.Item key={index}>{key}</ListGroup.Item>) }
-                                        </ListGroup>
-                                    </Col>
-                                </Row>
-                                { authorisedKeys.length > 1 &&
-                                    <Row className='section change-signer'>
-                                        <Col xs={3}>Change Signer</Col>
-                                        <Col className='passkey-id'>
-                                            <Form.Select onChange={ e => changePassKeyPair(e.target.value) } defaultValue={passKeyAPI.passKeyPair.keyId} size="sm">
-                                                { authorisedKeys.map( (key, index) => <option key={index}>{key}</option>) }
-                                            </Form.Select>
-                                        </Col>
-                                    </Row>
-                                }
-                                <Row>
-                                    <Col xs={3}>Add Signer</Col>
-                                    <Col className='section add-signer'>
-                                        <Row>
-                                        <Col xs={8}>
-                                        <Form.Control size="sm" type="text" placeholder="PassKey Name" onChange={ e => setPassKeyName(e.target.value)} value={ passKeyName } />
-                                        </Col>
-                                        <Col xs={4}>
-                                        <Button onClick={ createPassKey } disabled={(passKeyName?.length === 0 || newPassKey) ? true : false }>Create <MdKey /> </Button>
-                                        </Col>
-                                        </Row>
-                                        { newPassKey && !newPassKey.pubKeyX.isZero() && !newPassKey.pubKeyY.isZero() &&
-                                            <Row>
-                                                <Col xs={{ span:8, offset:4}}>
-                                                <Button onClick={ addPassKey } disabled={ txnProgress }>
-                                                    Add <MdKey /> - { newPassKey.name }
-                                                </Button>
-                                                </Col>
-                                            </Row>
-                                        }
-                                    </Col>
-                                </Row>
-                                { authorisedKeys.length > 1 &&
-                                    <Row className='section remove-signer'>
-                                        <Col xs={3}>Remove Signer</Col>
-                                        <Col>
-                                        <Row>
-                                            <Col xs={8}>
-                                            <Form.Select onChange={ e => setRemovePassKey(e.target.value) } size="sm">
-                                                    <option key=''>Pick a key to remove</option>
-                                                    { authorisedKeys
-                                                        .filter(x => x !== activeSigner)
-                                                        .map( (key, index) => <option key={index}>{key}</option>) }
-                                            </Form.Select>
-                                            </Col>
-                                            <Col xs={4}>
-                                            <Button onClick={ executeRemovePassKey } disabled={ txnProgress || removePassKey?.length === 0 }> Remove <MdKeyOff /> </Button>
-                                            </Col>
-                                        </Row>
-                                        </Col>
-                                    </Row>
-                                }
-                            </Container>
-                        }
-                        </Row>
-                    </Container>
+                    <Row>
+                        <ERC20Tokens jsonRPCProvider={jsonRPCProvider} address={address} tokenSender={sendERC20} reloadPassKeyAccount={reloadPassKeyAccount} />
+                    </Row>
                 </Col>
             </Row>
             <br/>
-            <Row className="justify-content-md-center">
-                <Col xs={4}>
-                <Toast onClose={() => setShowToast(false)} show={showToast} delay={15000} bg={toastStyle} autohide>
-                    <Toast.Header>
-                    <strong className="me-auto">Txn Update</strong>
-                    </Toast.Header>
-                    <Toast.Body>{toastMessage}</Toast.Body>
-                </Toast>
+            <Row>
+                <Col xs={12} md={12}>
+                    <Accordion>
+                        <Accordion.Item eventKey="0">
+                            <Accordion.Header>PassKey Signer Management</Accordion.Header>
+                            <Accordion.Body>
+                                <Container className='management'>
+                                    <Row>
+                                        <Col xs={3}>Active Signer</Col>
+                                        <Col xs={9} className='signer-hash'> {activeSigner} </Col>
+                                    </Row>
+                                    <Row>
+                                    { authorisedKeys.length > 0 && 
+                                        <Container className='signers'>
+                                            <Row>
+                                                <Col xs={3}>Other Signers</Col>
+                                                <Col className='passkey-id signer-hash'>
+                                                    <ListGroup>
+                                                        { authorisedKeys.map( (key, index) => <ListGroup.Item key={index}>{key}</ListGroup.Item>) }
+                                                    </ListGroup>
+                                                </Col>
+                                            </Row>
+                                            { authorisedKeys.length > 1 &&
+                                                <Row className='section change-signer'>
+                                                    <Col xs={3}>Change Signer</Col>
+                                                    <Col className='passkey-id'>
+                                                        <Form.Select onChange={ e => changePassKeyPair(e.target.value) } defaultValue={passKeyAPI.passKeyPair.keyId} size="sm">
+                                                            { authorisedKeys.map( (key, index) => <option key={index}>{key}</option>) }
+                                                        </Form.Select>
+                                                    </Col>
+                                                </Row>
+                                            }
+                                            <Row>
+                                                <Col xs={3}>Add Signer</Col>
+                                                <Col className='section add-signer'>
+                                                    <Row>
+                                                    <Col xs={8}>
+                                                    <Form.Control size="sm" type="text" placeholder="PassKey Name" onChange={ e => setPassKeyName(e.target.value)} value={ passKeyName } />
+                                                    </Col>
+                                                    <Col xs={4}>
+                                                    <Button onClick={ createPassKey } disabled={(passKeyName?.length === 0 || newPassKey) ? true : false }>Create <MdKey /> </Button>
+                                                    </Col>
+                                                    </Row>
+                                                    { newPassKey && !newPassKey.pubKeyX.isZero() && !newPassKey.pubKeyY.isZero() &&
+                                                        <Row>
+                                                            <Col xs={{ span:8, offset:4}}>
+                                                            <Button onClick={ addPassKey } disabled={ txnProgress }>
+                                                                Add <MdKey /> - { newPassKey.name }
+                                                            </Button>
+                                                            </Col>
+                                                        </Row>
+                                                    }
+                                                </Col>
+                                            </Row>
+                                            { authorisedKeys.length > 1 &&
+                                                <Row className='section remove-signer'>
+                                                    <Col xs={3}>Remove Signer</Col>
+                                                    <Col>
+                                                    <Row>
+                                                        <Col xs={8}>
+                                                        <Form.Select onChange={ e => setRemovePassKey(e.target.value) } size="sm">
+                                                                <option key=''>Pick a key to remove</option>
+                                                                { authorisedKeys
+                                                                    .filter(x => x !== activeSigner)
+                                                                    .map( (key, index) => <option key={index}>{key}</option>) }
+                                                        </Form.Select>
+                                                        </Col>
+                                                        <Col xs={4}>
+                                                        <Button onClick={ executeRemovePassKey } disabled={ txnProgress || removePassKey?.length === 0 }> Remove <MdKeyOff /> </Button>
+                                                        </Col>
+                                                    </Row>
+                                                    </Col>
+                                                </Row>
+                                            }
+                                        </Container>
+                                    }
+                                    </Row>
+                                </Container>
+                            </Accordion.Body>
+                        </Accordion.Item>
+                    </Accordion>
+                </Col>
+            </Row>
+            <br/>
+            <Row className='TxnUpdate'>
+                <Col xs={12} md={8}>
+                    <Accordion defaultActiveKey="0">
+                        <Accordion.Item eventKey="0">
+                            <Accordion.Header>Transaction Status</Accordion.Header>
+                            <Accordion.Body>
+                                <TxnUpdate tx={currentTransaction} passKeyProvider={passKeysProvider} bundlerRPCClient={bundlerRPCClient} />
+                            </Accordion.Body>
+                        </Accordion.Item>
+                    </Accordion>
+                </Col>
+                <Col xs={12} md={4} className="justify-content-md-center">
+                    <Toast onClose={() => setShowToast(false)} show={showToast} delay={15000} bg={toastStyle} autohide>
+                        <Toast.Header>
+                        <strong className="me-auto">Txn Update</strong>
+                        </Toast.Header>
+                        <Toast.Body>{toastMessage}</Toast.Body>
+                    </Toast>
                 </Col>
             </Row>
         </Container>

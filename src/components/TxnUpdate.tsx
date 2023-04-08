@@ -31,15 +31,15 @@ export const TxnUpdate = ( {tx, passKeyProvider, bundlerRPCClient} : TxnUpdatePr
             }
         }
         getTxStatus()
-    }, [tx])
+    }, [tx, passKeyProvider, bundlerRPCClient])
 
     return (
         <Row>
             <Row>
-                <Col xs={4}>
+                <Col xs={2}>
                     Txn Hash
                 </Col> 
-                <Col xs={8} className='data'>
+                <Col xs={10} className='data'>
                     {currentNetwork.explorerUrl && txHash ? 
                         <a href={`${currentNetwork.explorerUrl}tx/${txHash}`} target='_blank' rel='noreferrer'>{txHash}</a> : 
                         txHash
@@ -47,18 +47,18 @@ export const TxnUpdate = ( {tx, passKeyProvider, bundlerRPCClient} : TxnUpdatePr
                 </Col>
             </Row>
             <Row>
-                <Col xs={4}>
+                <Col xs={2}>
                     Txn Status
                 </Col> 
-                <Col xs={8} className='data'>
+                <Col xs={10} className='data'>
                     {txStatus}
                 </Col>
             </Row>
             <Row>
-                <Col xs={4}>
+                <Col xs={2}>
                     Block Hash
                 </Col> 
-                <Col xs={8} className='data'>
+                <Col xs={10} className='data'>
                     {blockHash}
                 </Col>
             </Row>

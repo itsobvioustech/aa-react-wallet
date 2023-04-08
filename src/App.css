@@ -45,7 +45,7 @@ body, html {
   }
 }
 
-.App input, .App button, .App select {
+.App input, .App select {
   padding: 5px 10px;
   margin: 3px 3px;
 }
@@ -85,6 +85,7 @@ body, html {
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 10px;
 }
 
 .account a {
@@ -94,6 +95,7 @@ body, html {
 
 .account .refresh {
   cursor: pointer;
+  margin-right: 10px;
 }
 
 .signer-hash, .passkey-id .list-group-item {
@@ -119,6 +121,6 @@ body, html {
   margin-top: 5px !important;
 }
 
-.erc20-token-send input {
+.erc20-token-send input, .native-token-send input {
   margin-top: 5px !important;
 }
