@@ -159,7 +159,7 @@ export const CheckWebAuthn = () => {
             <Col xs={4}>
               WebAuthn ✅
             </Col>
-            <Col xs={3}>
+            <Col xs={4}>
               Chain - {provider?._network?.chainId}
             </Col>
             <Col xs={4}>

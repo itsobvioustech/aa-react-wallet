@@ -37,7 +37,7 @@ export const TxnUpdate = ( {tx, passKeyProvider, bundlerRPCClient} : TxnUpdatePr
         <Row>
             <Row>
                 <Col xs={2}>
-                    Txn Hash
+                    Hash
                 </Col> 
                 <Col xs={10} className='data'>
                     {currentNetwork.explorerUrl && txHash ? 
@@ -48,7 +48,7 @@ export const TxnUpdate = ( {tx, passKeyProvider, bundlerRPCClient} : TxnUpdatePr
             </Row>
             <Row>
                 <Col xs={2}>
-                    Txn Status
+                    Status
                 </Col> 
                 <Col xs={10} className='data'>
                     {txStatus}
@@ -56,7 +56,7 @@ export const TxnUpdate = ( {tx, passKeyProvider, bundlerRPCClient} : TxnUpdatePr
             </Row>
             <Row>
                 <Col xs={2}>
-                    Block Hash
+                    Block
                 </Col> 
                 <Col xs={10} className='data'>
                     {blockHash}
