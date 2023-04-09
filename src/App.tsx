@@ -18,7 +18,7 @@ function App() {
           <div>
             To get started 
             <ul>
-              <li>Pick a <i>Username</i> and click Add a PassKey.</li>
+              <li>Pick a name to identify your PassKey and click Add a PassKey.</li>
               <li>You will be prompted to add a PassKey to your Apple Wallet / Android / Chrome.</li>
               <li>Once you have added a PassKey pick the PassKey from the dropdown.</li>
               <li>Currently contracts are deployed on Polygon - Mumbai and Base - Goerli. Select one of these networks.</li>
